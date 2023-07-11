@@ -1,4 +1,5 @@
 **/__pycache__/
 .vscode/
-/cache/*
+cache/*
+*/cache/*
 output_files/
