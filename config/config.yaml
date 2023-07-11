@@ -30,7 +30,7 @@ GPS_GENERATION:
 
 OUTPUT:            
   NETWORK_TABLES: 'output_files\network_tables'
-  METADATA: 'output_files/_/metadata'
+  METADATA: 'output_files\metadata'
   GPS: 'output_files\gps_data' 
 
 

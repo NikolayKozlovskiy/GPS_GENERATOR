@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import os
 from datetime import datetime
 from gps_synth_test.common.functions import class_getter, write_data
@@ -81,7 +80,22 @@ class GPS_Generator():
         write_data(network.gdf_hw, output_path_hw, geo = True)
         write_data (network.gdf_event, output_path_event, geo = True)
 
-    
+    def output_metadata(self, profiles, config_output): 
+      for profile in profiles: 
+        profile_name = self.config['GPS_GENERATION']['PROFILES'][profile]['PROFILE_NAME']
+        network = self.network_dictionary[profile_name]
+        users = self.users_dictionary[profile_name]
+
+        metadata_data_df = pd.DataFrame([[user.user_id,
+                            network.gdf_hw.iloc[user.home_id]['osmid'], 
+                            network.gdf_hw.iloc[user.work_id]['osmid'], 
+                            network.gdf_event.iloc[user.regular_loc_array]['osmid'].values, 
+                            user.profile] for user in users],
+                            columns = [ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile])
+        metadata_output_folder = config_output['METADATA']
+        output_path = os.path.join(metadata_output_folder, 'metadata_' + str(self.time_generated) + '.csv')     
+        write_data(metadata_data_df, output_path)
+
     
     def run(self):
       
@@ -96,5 +110,6 @@ class GPS_Generator():
 
       self.output_gps(profiles, self.config['OUTPUT'])
       self.output_network_tables(profiles, self.config['OUTPUT'])
+      self.output_metadata(profiles, self.config['OUTPUT'])
 
        
