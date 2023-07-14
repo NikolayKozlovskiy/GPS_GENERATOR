@@ -4,3 +4,4 @@ cache/
 */cache/*
 .env
 output_files/
+log_dir/
