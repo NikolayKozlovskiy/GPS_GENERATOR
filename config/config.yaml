@@ -1,3 +1,9 @@
+LOGGING:
+  LEVEL: "INFO"
+  LOG_DIR: 'log_dir'
+  FORMAT:  '%(asctime)s %(filename)s: %(message)s'
+  DATEFMT: '%Y-%m-%d %H:%M:%S'
+
 INIT:
   GPS_GENERATOR_PATH: 'gps_synth_test.gps_generator'
   GPS_GENERATOR_CLASS: 'GPS_Generator'

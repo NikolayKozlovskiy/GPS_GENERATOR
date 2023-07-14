@@ -251,12 +251,6 @@ class User_walk(User):
             list_of_locations = super().create_list_of_locations(day_of_week, self.home_id, self.work_id, self.regular_loc_array, self.gdf_hw, self.gdf_event)
             
             time_start = self.random_plot(time_start, day, day_of_week, list_of_locations)
-                
-        # gps_data = pd.DataFrame(self.data_array, columns = ['user', 'timestamp', 'lon', 'lat']).sort_values(by=['user','timestamp'])
-
-        # self.gps_data = gps_data
-
-        print('GPS data for User_walk is done')
 
     def print_self_param(self):
         self_dict = vars(self)
