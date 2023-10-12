@@ -7,7 +7,6 @@ from datetime import timedelta
 from pyproj import Transformer, CRS, Geod
 from shapely.geometry import LineString, Point
 import numpy as np
-import pandas as pd
 
 crs_4326 = CRS.from_epsg(4326)
 
