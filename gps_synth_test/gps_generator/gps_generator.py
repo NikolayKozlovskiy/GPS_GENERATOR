@@ -1,134 +1,158 @@
 import pandas as pd
 import os
-import logging 
+import logging
+import pandas as pd
+import geopandas as gpd
 from datetime import datetime
-from gps_synth_test.common.functions import class_getter, write_data
+from gps_synth_test.common.functions import class_getter, write_data, check_or_create_dir
 from gps_synth_test.common.columns import ColNames
 
+
 class GPS_Generator():
-    def __init__(self, config) -> None:
-      self.config = config
-      self.logger = logging.getLogger(__name__)
-      self.place_name = config['GPS_GENERATION']['COMMON']['PLACE_NAME']
-      self.date_range = pd.date_range(config['GPS_GENERATION']['COMMON']['DATE_BEGGINING'],\
-                                      config['GPS_GENERATION']['COMMON']['DATE_END'], freq = 'd')
-      self.time_generated = datetime.now().strftime(format = "%Y%m%d%H%M%S")
-      self.network_dictionary = {}
-      self.users_dictionary = {}
+    def __init__(self, base_dir, config) -> None:
+        self.config = config
+        self.logger = logging.getLogger(__name__)
 
-    def create_network(self, profile_config):
+        self.time_generated = datetime.now().strftime(format="%Y%m%d%H%M%S")
+        self.network_dictionary = {}
+        self.users_dictionary = {}
 
-      network_class = class_getter(profile_config['NETWORK_PARAMS']['NETWORK_MODULE_PATH'], profile_config['NETWORK_PARAMS']['NETWORK_CLASS'])
+        for output in self.config["OUTPUT"]:
+            output_path = os.path.join(base_dir, self.config["OUTPUT"][output])
+            check_or_create_dir(output_path)
+            self.config["OUTPUT"][output] = output_path
 
-      new_network = network_class(self.place_name, profile_config)
+    def create_network(self, profile_network_config):
 
-      new_network.run()
+        network_class = class_getter(
+            profile_network_config['NETWORK_MODULE_PATH'], profile_network_config['NETWORK_CLASS'])
 
-      self.network_dictionary[profile_config['PROFILE_NAME']] = new_network
+        network = network_class(profile_network_config)
 
-      self.logger.info(f"Network for profile '{profile_config['PROFILE_NAME']}' is generated")
+        network.run()
 
-    def generate_users(self, date_range, profile_config, id_counter = 1): 
+        return network
 
-      Network = self.network_dictionary[profile_config['PROFILE_NAME']]
-      users_array = []
+    def generate_users(self, network, profile_user_config, id_counter=1):
 
-      for user in range(profile_config['NUM_USERS']): 
-        user_class = class_getter(profile_config['USER_PARAMS']['USER_MODULE_PATH'], profile_config['USER_PARAMS']['USER_CLASS'])
-        new_user = user_class(id_counter, date_range, Network, profile_config)
-        users_array.append(new_user)
-        id_counter += 1 
-      
-      self.users_dictionary[profile_config['PROFILE_NAME']] = users_array
+        users_array = []
 
-      self.logger.info(f"Users for profile '{profile_config['PROFILE_NAME']}' is generated, number of users: {profile_config['NUM_USERS']}")
+        for _ in range(profile_user_config['NUM_USERS']):
+            user_class = class_getter(
+                profile_user_config['USER_MODULE_PATH'], profile_user_config['USER_CLASS'])
+            new_user = user_class(id_counter,
+                                  network, profile_user_config)
+            users_array.append(new_user)
+            id_counter += 1
 
-    def generate_meaningful_locations_for_users(self, profile_config): 
+        return users_array
 
-      users = self.users_dictionary[profile_config['PROFILE_NAME']]
+    def execute_method_for_users(self, users, method_name):
 
-      for user in users: 
-        user.get_meaningful_locations()
+        for user in users:
+            method = getattr(user, method_name)
+            method()
+        return users
 
-      self.logger.info(f"Meaningful locations for users of profile '{profile_config['PROFILE_NAME']}' is generated")
+    def output_gps(self, users_dictionary, gps_output_folder):
+        self.logger.info(f"Writting GPS data")
+        gps_data = []
+        gps_data_df = pd.DataFrame(columns=[
+                                   ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat, ColNames.profile])
 
-    def generate_gps_data_for_users(self, profile_config): 
+        for profile_name, users in users_dictionary.items():
+            for user in users:
+                gps_data += user.data_array
+            gps_data_profile_df = pd.DataFrame(gps_data, columns=[ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat]).\
+                sort_values(by=[ColNames.user_id, ColNames.timestamp])
+            gps_data_profile_df[ColNames.profile] = profile_name
 
-      users = self.users_dictionary[profile_config['PROFILE_NAME']]
+            gps_data_df = pd.concat(
+                [gps_data_df, gps_data_profile_df], ignore_index=True)
 
-      for user in users: 
-        user.generate_gps()
+        output_path = os.path.join(
+            gps_output_folder, 'synthGPS_' + str(self.time_generated) + '.csv')
 
-      self.logger.info(f"GPS data for users of profile '{profile_config['PROFILE_NAME']}' is generated")
+        write_data(gps_data_df, output_path)
 
-    def output_gps(self, profiles, config_output): 
-      self.logger.info(f"Writting GPS data")
-      gps_data = []
-      gps_data_df = pd.DataFrame(columns = [ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat, ColNames.profile])
-      for profile in profiles: 
-        users = self.users_dictionary[self.config['GPS_GENERATION']['PROFILES'][profile]['PROFILE_NAME']]
-        for user in users: 
-          gps_data += user.data_array
-        gps_data_profile_df = pd.DataFrame(gps_data, columns = [ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat]).\
-                              sort_values(by = [ColNames.user_id, ColNames.timestamp])
-        gps_data_profile_df[ColNames.profile] = self.config['GPS_GENERATION']['PROFILES'][profile]['PROFILE_NAME']
+    def output_network_tables(self, network_dictionary, network_output_folder):
 
-        gps_data_df = pd.concat([gps_data_df, gps_data_profile_df], ignore_index = True)
+        self.logger.info(f"Writting Network tables")
 
-      gps_output_folder = config_output['GPS']
-      output_path = os.path.join(gps_output_folder, 'synthGPS_' + str(self.time_generated) + '.csv')     
-      write_data(gps_data_df, output_path)
+        for profile_name, network in network_dictionary.items():
 
+            network_gdf = gpd.GeoDataFrame(pd.concat([network.gdf_hw.assign(
+                loc_type="hw"), network.gdf_event.assign(loc_type="event")], ignore_index=True)).to_crs(4326)
 
-    def output_network_tables(self, profiles, config_output): 
+            output_subfolder = os.path.join(
+                network_output_folder, profile_name)
 
-      self.logger.info(f"Writting Network tables")
+            os.makedirs(output_subfolder, exist_ok=True)
 
-      for profile in profiles: 
-        profile_name = self.config['GPS_GENERATION']['PROFILES'][profile]['PROFILE_NAME']
-        network = self.network_dictionary[profile_name]
-        network_output_folder = config_output['NETWORK_TABLES']
+            output_path_network = os.path.join(
+                output_subfolder, 'network_' + str(self.time_generated) + '.gpkg')
 
-        output_path_hw = os.path.join(network_output_folder, profile_name +'\hw_' + str(self.time_generated) + '.gpkg')
-        output_path_event = os.path.join(network_output_folder, profile_name +'\event_' + str(self.time_generated) + '.gpkg') 
-        write_data(network.gdf_hw, output_path_hw, geo = True)
-        write_data (network.gdf_event, output_path_event, geo = True)
+            write_data(network_gdf, output_path_network, geo=True)
 
-    def output_metadata(self, profiles, config_output): 
+    def output_metadata(self, users_dictionary, network_dictionary, metadata_output_folder):
 
-      self.logger.info(f"Writting metadata")
+        self.logger.info(f"Writting metadata")
 
-      for profile in profiles: 
-        profile_name = self.config['GPS_GENERATION']['PROFILES'][profile]['PROFILE_NAME']
-        network = self.network_dictionary[profile_name]
-        users = self.users_dictionary[profile_name]
+        for profile_name, users in users_dictionary.items():
+            network = network_dictionary[profile_name]
 
-        metadata_data_df = pd.DataFrame([[user.user_id,
-                            network.gdf_hw.iloc[user.home_id]['osmid'], 
-                            network.gdf_hw.iloc[user.work_id]['osmid'], 
-                            network.gdf_event.iloc[user.regular_loc_array]['osmid'].values, 
-                            user.profile] for user in users],
-                            columns = [ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile])
-        metadata_output_folder = config_output['METADATA']
-        output_path = os.path.join(metadata_output_folder, 'metadata_' + str(self.time_generated) + '.csv')     
-        write_data(metadata_data_df, output_path)
+            metadata_data_df = pd.DataFrame([[user.user_id,
+                                              network.gdf_hw.iloc[user.home_id]['osmid'],
+                                              network.gdf_hw.iloc[user.work_id]['osmid'],
+                                              network.gdf_event.iloc[user.regular_loc_array]['osmid'].values,
+                                              user.profile] for user in users],
+                                            columns=[ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile])
 
-    
+            output_path = os.path.join(
+                metadata_output_folder, 'metadata_' + str(self.time_generated) + '.csv')
+            write_data(metadata_data_df, output_path)
+
     def run(self):
-      
-      profiles = self.config['GPS_GENERATION']['PROFILES'].keys()
 
-      for profile in profiles: 
-        profile_config = self.config['GPS_GENERATION']['PROFILES'][profile]
-        self.logger.info(f"Started generating process for profile: {profile_config['PROFILE_NAME']}")
-        self.create_network(profile_config)
-        self.generate_users(self.date_range, profile_config)
-        self.generate_meaningful_locations_for_users(profile_config)
-        self.generate_gps_data_for_users(profile_config)
+        profiles = self.config['PROFILES'].keys()
 
-      self.logger.info(f"Started writing results")
-      self.output_gps(profiles, self.config['OUTPUT'])
-      self.output_network_tables(profiles, self.config['OUTPUT'])
-      self.output_metadata(profiles, self.config['OUTPUT'])
+        for profile in profiles:
+            profile_config = self.config['PROFILES'][profile]
+            profile_name = profile_config['PROFILE_NAME']
 
-       
+            self.logger.info(
+                f"Started generating process for profile: {profile_name}")
+
+            profile_network_config = profile_config["NETWORK_PARAMS"]
+
+            if profile_network_config["USE_AREADY_CREATED"]:
+                network = self.network_dictionary[profile_name]
+            else:
+                network = self.create_network(profile_network_config)
+                self.network_dictionary[profile_name] = network
+            self.logger.info(
+                f"Network for profile '{profile_name}' is generated")
+
+            users = self.generate_users(
+                network, profile_config["USER_PARAMS"])
+            self.logger.info(
+                f"Users for profile '{profile_name}' is generated, number of users: {profile_name}")
+
+            users_with_mean_loc = self.execute_method_for_users(
+                users, "get_meaningful_locations")
+            self.logger.info(
+                f"Meaningful locations for users of profile '{profile_name}' is generated")
+
+            users_with_gps = self.execute_method_for_users(
+                users_with_mean_loc, "generate_gps")
+            self.logger.info(
+                f"Meaningful locations for users of profile '{profile_name}' is generated")
+
+            self.users_dictionary[profile_name] = users_with_gps
+
+        self.logger.info(f"Started writing results")
+        self.output_gps(self.users_dictionary, self.config['OUTPUT']['GPS'])
+        self.output_network_tables(
+            self.network_dictionary, self.config['OUTPUT']['NETWORK_TABLES'])
+        self.output_metadata(
+            self.users_dictionary, self.network_dictionary, self.config['OUTPUT']['METADATA'])
