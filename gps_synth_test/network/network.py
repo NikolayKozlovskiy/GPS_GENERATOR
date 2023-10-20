@@ -62,5 +62,3 @@ class Network:
             self.gdf_locations, filter_columns_hw)
         self.gdf_event = self.get_specific_type_of_locations(
             self.gdf_locations, filter_columns_event)
-
-        print('Network class is ready')
