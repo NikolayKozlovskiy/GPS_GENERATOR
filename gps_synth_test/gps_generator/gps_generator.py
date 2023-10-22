@@ -125,7 +125,7 @@ class GPS_Generator():
 
             profile_network_config = profile_config["NETWORK_PARAMS"]
 
-            if profile_network_config["USE_AREADY_CREATED"]:
+            if profile_network_config["USE_ALREADY_CREATED"]:
                 network = self.network_dictionary[profile_name]
             else:
                 network = self.create_network(profile_network_config)

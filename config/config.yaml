@@ -15,7 +15,7 @@ PROFILES:
     NETWORK_PARAMS:
       NETWORK_MODULE_PATH: "gps_synth_test.network"
       NETWORK_CLASS: "Network"
-      USE_AREADY_CREATED: False
+      USE_ALREADY_CREATED: False
       PROFILE_NAME_REF: "-" # or leave empty
       PLACE_NAME: "Tartu, Tartu linn, Tartu maakond, Estonia"
       NETWORK_TYPE: "walk"
