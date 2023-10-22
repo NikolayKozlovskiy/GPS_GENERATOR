@@ -5,7 +5,7 @@ LOGGING:
   DATEFMT: "%Y-%m-%d %H:%M:%S"
 
 INIT:
-  GPS_GENERATOR_PATH: "gps_synth_test.gps_generator"
+  GPS_GENERATOR_PATH: "gps_synth.gps_generator"
   GPS_GENERATOR_CLASS: "GPS_Generator"
 
 PROFILES:
