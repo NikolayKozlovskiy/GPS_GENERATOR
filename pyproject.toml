@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "gps_synth"
 version = "0.1.0"
-description = ""
+description = "Python package to generate GPS synthetic data"
 authors = ["Nikolay Kozlovskiy <nikolajkozlovskij73@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9,<=3.12"
 geopandas = "0.14.0"
 osmnx = "1.6.0"
 scipy = "^1.11.3"
