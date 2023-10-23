@@ -13,3 +13,16 @@ The basic foundation of the approach is as follows:
 - There are three main types of locations: **home, work and event** (bars, parks, museums, etc.). Event could be either one of the **regular** locations of a user or **random** location (amenity) in the area
 - The entire movement history of a user can be described as **a consecutive process of stay and movement activities happen in some locations**
 - The combination of these two types of activities and the type of locations in which they occur are **specified by the plot**. Each unique movement plot should automatically produce a new child class of the Parent Class User (e.g., in this script, it is the User_walk class)
+
+## Deployment
+
+### Conda + Poetry
+
+1. Navigate to a directory you want to run the package and store results
+2. Clone the repo: `git clone https://github.com/NikolayKozlovskiy/GPS_GENERATOR.git`
+3. Move to GPS_GENERATOR directory: `cd GPS_GENERATOR`
+4. Create python environment with [conda](https://docs.conda.io/en/latest/), conda is used for downloading python; 3.9 <= python version <= 3.12 because of dependecies' specifics: `conda create --name [your_env_name] python=3.10 -y`
+5. Activate python environment: `conda activate [your_env_name]`
+6. Install [poetry](https://python-poetry.org/docs/#installing-with-the-official-installer), version - up to you to choose: `pip install poetry==1.6.0`
+7. Install other dependencies listed in pyproject.toml, `poetry install --with vis`, **_--with vis_** option specifies that along with core dependencies an optional group called _vis_ should be installed. _Vis_ group includes libraries that you may need to analyse and visualise the output results, run `poetry install` if you don't need these modules
+8. Run the codebase: `python gps_synth/main.py configs/config_example.yaml`
