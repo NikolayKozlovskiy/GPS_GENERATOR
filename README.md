@@ -25,4 +25,26 @@ The basic foundation of the approach is as follows:
 5. Activate python environment: `conda activate [your_env_name]`
 6. Install [poetry](https://python-poetry.org/docs/#installing-with-the-official-installer), version - up to you to choose: `pip install poetry==1.6.0`
 7. Install other dependencies listed in pyproject.toml, `poetry install --with vis`, **_--with vis_** option specifies that along with core dependencies an optional group called _vis_ should be installed. _Vis_ group includes libraries that you may need to analyse and visualise the output results, run `poetry install` if you don't need these modules
-8. Run the codebase: `python gps_synth/main.py configs/config_example.yaml`
+8. Run the codebase: `python gps_synth/main.py configs/[your_config].yaml`\*<br /><br />
+
+   Prerequirements:
+
+   1. Installed conda, the easiest way is to download [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/)
+   2. Installed [gdal](https://gdal.org/) locally
+
+\*You may need to directly specify the python path to GPS_GENERATOR: `export PYTHONPATH=/path/to/GPS_GENERATOR folder`
+
+### Docker + Poetry + Makefile
+
+The idea is mostly the same as in first approach with only difference that poetry uses python from Docker image and code is running in a docker container, not on the host. The commands are wrapped up in Makefile for convenience\*
+
+1. Build a docker image called gps_generator: `make build_docker_image`
+2. Based on the image create a docker container named the same, which will constatntly run till it is removed, make sure you specified the correct paths for your source directories in [bind mounts](https://docs.docker.com/storage/bind-mounts/): `make create_docker_container OUTPUT_DIR=/path/to/output`
+3. Open new terminal and run the main.py script with CONFIG variable which is a relative path to a config file you want to use: `make run_main_script`. If you want to run some other commands use [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) option, make sure your container is running
+4. When you no longer neead a container, remove it: `make remove_docker_container`\*<br /><br />
+
+   Prerequirements:
+
+   1. Installed [Docker](https://www.docker.com/get-started/)
+
+\*If make is not available just open Makefile in text editor and run corresponding shell commands in terminal manually
