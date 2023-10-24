@@ -11,7 +11,6 @@ create_docker_container:
 	@echo "The ouput directory path: $(OUTPUT_DIR)"
 	@docker run --name gps_generator \
 	--mount type=bind,src=$(PWD)/configs,dst=/GPS_GENERATOR/configs \
-	--mount type=bind,src=$(PWD)/log_dir,dst=/GPS_GENERATOR/log_dir \
 	--mount type=bind,src=$(OUTPUT_DIR),dst=/GPS_GENERATOR/output_files \
 	-t gps_generator 
 
