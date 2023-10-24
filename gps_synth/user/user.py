@@ -1,5 +1,4 @@
 from abc import ABC
-from geopandas import GeoDataFrame
 import osmnx as ox
 import pandas as pd
 import random
@@ -8,6 +7,7 @@ from datetime import timedelta
 from pyproj import Transformer, CRS, Geod
 from shapely.geometry import LineString, Point
 import numpy as np
+from gps_synth.common.columns import ColNames
 
 crs_4326 = CRS.from_epsg(4326)
 
@@ -17,10 +17,9 @@ class User(ABC):
         self.user_id = user_id
         self.date_range = pd.date_range(profile_user_config['DATE_BEGGINING'],
                                         profile_user_config['DATE_END'], freq='d')
-        self.profile = "User"
         self.Network = Network
-        self.gdf_hw = Network.gdf_hw
-        self.gdf_event = Network.gdf_event
+        self.df_hw = Network.df_hw
+        self.df_event = Network.df_event
         self.min_distance_h_w = profile_user_config['MIN_DISTANCE_H_W']
         self.min_distance_w_r = profile_user_config['MIN_DISTANCE_W_R']
         self.mean_velocity_ms = profile_user_config['MEAN_VELOCITY_MS']
@@ -35,17 +34,17 @@ class User(ABC):
         self.data_array = []
         self.gps_data = None
 
-    def get_meaningful_locations(self, Network, gdf_hw, gdf_event, min_distance_h_w, min_distance_w_r):
+    def get_meaningful_locations(self, Network, df_hw, df_event, min_distance_h_w, min_distance_w_r):
 
         while True:
-            home_id = random.randint(0, len(gdf_hw)-1)
-            work_id = random.randint(0, len(gdf_hw)-1)
-            home_node = Network.nodes.loc[gdf_hw.iloc[home_id]
+            home_id = random.randint(0, len(df_hw)-1)
+            work_id = random.randint(0, len(df_hw)-1)
+            home_node = Network.nodes.loc[df_hw.iloc[home_id]
                                           ['nearest_node_id']]
-            work_node = Network.nodes.loc[gdf_hw.iloc[work_id]
+            work_node = Network.nodes.loc[df_hw.iloc[work_id]
                                           ['nearest_node_id']]
-            distance_to_h = gdf_hw.iloc[home_id]['distance_to_node']
-            distance_to_w = gdf_hw.iloc[work_id]['distance_to_node']
+            distance_to_h = df_hw.iloc[home_id]['distance_to_node']
+            distance_to_w = df_hw.iloc[work_id]['distance_to_node']
             final_distance = ox.distance.euclidean_dist_vec(home_node['y'], home_node['x'], work_node['y'], work_node['x'])\
                 + distance_to_h+distance_to_w
             if final_distance >= min_distance_h_w:  # meters
@@ -53,10 +52,10 @@ class User(ABC):
                 number_of_regular_locations = random.randint(3, 5)
                 i = 0
                 while i <= number_of_regular_locations:
-                    regular_id = random.randint(0, len(gdf_event)-1)
-                    regular_node = Network.nodes.loc[gdf_event.iloc[regular_id]
+                    regular_id = random.randint(0, len(df_event)-1)
+                    regular_node = Network.nodes.loc[df_event.iloc[regular_id]
                                                      ['nearest_node_id']]
-                    distance_to_reg_loc = gdf_event.iloc[regular_id]['distance_to_node']
+                    distance_to_reg_loc = df_event.iloc[regular_id]['distance_to_node']
                     if ox.distance.euclidean_dist_vec(regular_node['y'], regular_node['x'], work_node['y'], work_node['x'])\
                             + distance_to_reg_loc + distance_to_w >= min_distance_w_r:  # meters
                         regular_locations_ids.append(regular_id)
@@ -71,10 +70,10 @@ class User(ABC):
             else:
                 continue
 
-    def get_regular_or_random_loc(self, regular_location_ids, gdf_event, number_of_events):
+    def get_regular_or_random_loc(self, regular_location_ids, df_event, number_of_events):
         event_id_list = []
         while len(event_id_list) < number_of_events:
-            random_id = [random.randint(0, len(gdf_event)-1)]
+            random_id = [random.randint(0, len(df_event)-1)]
             array_of_ids = np.array(
                 [regular_location_ids, random_id], dtype='object')
             choose_reg_or_random = np.random.choice(
@@ -87,15 +86,15 @@ class User(ABC):
 
         return event_id_list
 
-    def get_info_about_loc(self, list_of_ids, gdf):
+    def get_info_about_loc(self, list_of_ids, df):
         list_of_info = []
         for loc_id in list_of_ids:
-            list_of_info.append([gdf.iloc[loc_id]['nearest_node_id'],
-                                gdf.iloc[loc_id]['center_x'], gdf.iloc[loc_id]['center_y']])
+            list_of_info.append([df.iloc[loc_id]['nearest_node_id'],
+                                df.iloc[loc_id][ColNames.centre_x], df.iloc[loc_id][ColNames.centre_y]])
 
         return list_of_info
 
-    def create_list_of_locations(self, day_of_week, home_id, work_id, regular_loc_array, gdf_hw, gdf_event):
+    def create_list_of_locations(self, day_of_week, home_id, work_id, regular_loc_array, df_hw, df_event):
         if day_of_week < 6:
             number_of_events = np.random.choice(
                 [0, 1, 2, 3], 1, p=[0.6, 0.25, 0.1, 0.05])[0]
@@ -106,12 +105,12 @@ class User(ABC):
             list_of_ids = [home_id]
 
         event_id_list = self.get_regular_or_random_loc(
-            regular_loc_array, gdf_event, number_of_events)
+            regular_loc_array, df_event, number_of_events)
 
         list_of_locations_not_event = self.get_info_about_loc(
-            list_of_ids, gdf_hw)
+            list_of_ids, df_hw)
         list_of_locations_event = self.get_info_about_loc(
-            event_id_list, gdf_event)
+            event_id_list, df_event)
 
         list_of_locations = list_of_locations_not_event + list_of_locations_event
 
@@ -214,10 +213,11 @@ class User(ABC):
 class User_walk(User):
     def __init__(self, user_id: int, Network, profile_user_config):
         super().__init__(user_id, Network, profile_user_config)
+        self.child_class_name = "User_walk"
 
     def get_meaningful_locations(self):
-        super().get_meaningful_locations(self.Network, self.gdf_hw,
-                                         self.gdf_event, self.min_distance_h_w, self.min_distance_w_r)
+        super().get_meaningful_locations(self.Network, self.df_hw,
+                                         self.df_event, self.min_distance_h_w, self.min_distance_w_r)
 
     def random_plot(self, time_start, day, day_of_week, list_of_locations):
 
@@ -278,7 +278,7 @@ class User_walk(User):
             day_of_week = day.isoweekday()
 
             list_of_locations = super().create_list_of_locations(day_of_week, self.home_id,
-                                                                 self.work_id, self.regular_loc_array, self.gdf_hw, self.gdf_event)
+                                                                 self.work_id, self.regular_loc_array, self.df_hw, self.df_event)
 
             time_start = self.random_plot(
                 time_start, day, day_of_week, list_of_locations)

@@ -1,9 +1,11 @@
-class ColNames: 
+class ColNames:
     user_id = 'user_id'
     timestamp = 'timestamp'
     lon = 'lon'
     lat = 'lat'
-    profile = 'profile'
+    profile_name = 'profile_name'
+    centre_x = 'centre_x'
+    centre_y = 'centre_y'
     home_id = 'home_id'
     work_id = 'work_id'
     regular_loc_array = 'regular_loc_array'

@@ -1,7 +1,8 @@
 import osmnx as ox
 from networkx import MultiDiGraph
 from typing import List
-from geopandas import GeoDataFrame
+from pandas import DataFrame
+from gps_synth.common.columns import ColNames
 
 
 class Network:
@@ -35,18 +36,19 @@ class Network:
         graph_crs = nodes.crs
         gdf_locations = gdf_locations[geometry_condition][columns_to_save].to_crs(
             graph_crs)
-        gdf_locations['center_x'] = gdf_locations['geometry'].centroid.x
-        gdf_locations['center_y'] = gdf_locations['geometry'].centroid.y
-        gdf_locations['nearest_node_id'], gdf_locations['distance_to_node'] = ox.distance.nearest_nodes(
-            graph_proj, gdf_locations['center_x'], gdf_locations['center_y'], return_dist=True)
+        gdf_locations[ColNames.centre_x] = gdf_locations['geometry'].centroid.x
+        gdf_locations[ColNames.centre_y] = gdf_locations['geometry'].centroid.y
+        df_locations = gdf_locations.drop(columns='geometry')
+        df_locations['nearest_node_id'], df_locations['distance_to_node'] = ox.distance.nearest_nodes(
+            graph_proj, df_locations[ColNames.centre_x], df_locations[ColNames.centre_y], return_dist=True)
 
         self.graph_crs = graph_crs
         self.nodes = nodes
-        self.gdf_locations = gdf_locations
+        self.df_locations = df_locations
 
-    def get_specific_type_of_locations(self, gdf_locations: GeoDataFrame, filter_columns: List) -> GeoDataFrame:
+    def get_specific_type_of_locations(self, df_locations: DataFrame, filter_columns: List) -> DataFrame:
         delete_columns = self.osm_tags_for_hw + self.osm_tags_for_event
-        return gdf_locations[gdf_locations[filter_columns].notnull().any(axis=1)][list(set(gdf_locations.columns) - set(delete_columns))]\
+        return df_locations[df_locations[filter_columns].notnull().any(axis=1)][list(set(df_locations.columns) - set(delete_columns))]\
             .reset_index()
 
     def run(self):
@@ -58,7 +60,7 @@ class Network:
         filter_columns_hw = self.osm_tags_for_hw
         filter_columns_event = self.osm_tags_for_event
 
-        self.gdf_hw = self.get_specific_type_of_locations(
-            self.gdf_locations, filter_columns_hw)
-        self.gdf_event = self.get_specific_type_of_locations(
-            self.gdf_locations, filter_columns_event)
+        self.df_hw = self.get_specific_type_of_locations(
+            self.df_locations, filter_columns_hw)
+        self.df_event = self.get_specific_type_of_locations(
+            self.df_locations, filter_columns_event)

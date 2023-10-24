@@ -2,10 +2,12 @@ import pandas as pd
 import os
 import logging
 import pandas as pd
-import geopandas as gpd
+from pyproj import Transformer, CRS
 from datetime import datetime
 from gps_synth.common.functions import class_getter, write_data, check_or_create_dir
 from gps_synth.common.columns import ColNames
+
+crs_4326 = CRS.from_epsg(4326)
 
 
 class GPS_Generator():
@@ -58,14 +60,14 @@ class GPS_Generator():
         self.logger.info(f"Writting GPS data")
         gps_data = []
         gps_data_df = pd.DataFrame(columns=[
-                                   ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat, ColNames.profile])
+                                   ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat, ColNames.profile_name])
 
         for profile_name, users in users_dictionary.items():
             for user in users:
                 gps_data += user.data_array
             gps_data_profile_df = pd.DataFrame(gps_data, columns=[ColNames.user_id, ColNames.timestamp, ColNames.lon, ColNames.lat]).\
                 sort_values(by=[ColNames.user_id, ColNames.timestamp])
-            gps_data_profile_df[ColNames.profile] = profile_name
+            gps_data_profile_df[ColNames.profile_name] = profile_name
 
             gps_data_df = pd.concat(
                 [gps_data_df, gps_data_profile_df], ignore_index=True)
@@ -81,18 +83,24 @@ class GPS_Generator():
 
         for profile_name, network in network_dictionary.items():
 
-            network_gdf = gpd.GeoDataFrame(pd.concat([network.gdf_hw.assign(
-                loc_type="hw"), network.gdf_event.assign(loc_type="event")], ignore_index=True)).to_crs(4326)
+            network_df = pd.DataFrame(pd.concat([network.df_hw.assign(
+                loc_type="hw"), network.df_event.assign(loc_type="event")], ignore_index=True))
 
-            output_subfolder = os.path.join(
-                network_output_folder, profile_name)
+            network_df = network_df.drop(
+                columns=['nearest_node_id', 'distance_to_node'])
 
-            os.makedirs(output_subfolder, exist_ok=True)
+            transformer_to_WGS = Transformer.from_crs(
+                network.graph_crs, crs_4326, always_xy=True)
+
+            network_df[ColNames.centre_x], network_df[ColNames.centre_y] = transformer_to_WGS.transform(
+                network_df[ColNames.centre_x], network_df[ColNames.centre_y])
+
+            network_df[ColNames.profile_name] = profile_name
 
             output_path_network = os.path.join(
-                output_subfolder, 'network_' + str(self.time_generated) + '.gpkg')
+                network_output_folder, 'network_' + str(self.time_generated) + '.csv')
 
-            write_data(network_gdf, output_path_network, geo=True)
+            write_data(network_df, output_path_network)
 
     def output_metadata(self, users_dictionary, network_dictionary, metadata_output_folder):
 
@@ -102,11 +110,11 @@ class GPS_Generator():
             network = network_dictionary[profile_name]
 
             metadata_data_df = pd.DataFrame([[user.user_id,
-                                              network.gdf_hw.iloc[user.home_id]['osmid'],
-                                              network.gdf_hw.iloc[user.work_id]['osmid'],
-                                              network.gdf_event.iloc[user.regular_loc_array]['osmid'].values,
-                                              user.profile] for user in users],
-                                            columns=[ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile])
+                                              network.df_hw.iloc[user.home_id]['osmid'],
+                                              network.df_hw.iloc[user.work_id]['osmid'],
+                                              network.df_event.iloc[user.regular_loc_array]['osmid'].values,
+                                              profile_name] for user in users],
+                                            columns=[ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile_name])
 
             output_path = os.path.join(
                 metadata_output_folder, 'metadata_' + str(self.time_generated) + '.csv')
