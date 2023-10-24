@@ -35,5 +35,5 @@ PROFILES:
 
 OUTPUT:
   GPS: "output_files/gps_data"
-  NETWORK_TABLES: "output_files/network_tables"
+  NETWORK_TABLES: "output_files/network_data"
   METADATA: "output_files/metadata"
