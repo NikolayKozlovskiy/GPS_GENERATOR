@@ -1,1 +1,1 @@
-from gps_synth.user.user import *
+from gps_synth.user import *

@@ -1,30 +1,42 @@
 import importlib
 import os
+import shutil
 import logging
+import pyarrow as pa
+import pyarrow.dataset as ds
+import uuid
 from pandas import DataFrame
-from geopandas import GeoDataFrame
-from typing import NoReturn
-
-logger = logging.getLogger(__name__)
+from typing import List, Optional
 
 
-def check_or_create_dir(directory: str) -> NoReturn:
+def delete_directory(directory: str) -> None:
     """
-    Checks if a directory exists and creates it if it doesn't.
+    Delete a directory both Empty or Non-Empty
 
     Args:
-        directory (str): The directory path.
-        parent_directory (str): The parent directory path. Defaults to the current working directory.
+        directory (str): The directory path
+    """
 
-    Returns:
-        bool: True if the directory exists or was successfully created, False otherwise.
+    try:
+        shutil.rmtree(directory)
+    except OSError as e:
+        print(f"Unable to handle input directory path '{directory}': {e}")
+        raise
+
+
+def check_or_create_dir(directory: str) -> None:
+    """
+    Check if a directory exists and create it if it doesn't
+
+    Args:
+        directory (str): The directory path
     """
 
     try:
         if not os.path.exists(directory):
             os.makedirs(directory)
     except OSError as e:
-        print(f"Failed to create directory '{directory}': {e}")
+        print(f"Unable to handle input directory path '{directory}': {e}")
         raise
 
 
@@ -35,10 +47,30 @@ def class_getter(module_path: str, class_name: str) -> __build_class__:
     return class_result
 
 
-def write_data(data: DataFrame | GeoDataFrame, output_path: str, geo: bool = False):
-    if geo == True:
-        data.to_file(output_path, driver="GPKG")
-    else:
-        data.to_csv(output_path, sep=',', index=False)
+def write_df_to_parquet(df: DataFrame, base_dir: str, partition_cols: Optional[List[str]] = None) -> None:
+    """
+    Writes dataframe to Parquet
+    If df is empty, writes a file
+    When using the same path, but with data, the file gets overwritten
 
-    logger.info(f"Data written to: {output_path}")
+    Args: 
+        df (DataFrame): Dataframe to write in parquet
+        base_dir (str): Base directory where to write data
+        partition_cols (Optional[List[str]] = None): A list of columns to use for partitioning, if None use [profile_name]
+    """
+    partition_cols = [
+        "profile_name"] if partition_cols is None else partition_cols
+
+    # If empty df was saved earlier, we need to delete it
+    # in order to save the partitioned stuff
+    if os.path.exists(base_dir) and os.path.isfile(base_dir):
+        os.remove(base_dir)
+
+    table = pa.Table.from_pandas(df)
+
+    del (df)
+
+    ds.write_dataset(table, base_dir=base_dir, format='parquet', partitioning=partition_cols,
+                     existing_data_behavior='overwrite_or_ignore',
+                     partitioning_flavor='hive', basename_template='part-{i}' + f'{uuid.uuid4().hex}.parquet')
+    return None

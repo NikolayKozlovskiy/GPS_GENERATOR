@@ -16,14 +16,14 @@ PROFILES:
       NETWORK_MODULE_PATH: "gps_synth.network"
       NETWORK_CLASS: "Network"
       USE_ALREADY_CREATED: False
-      PROFILE_NAME_REF: "-" # or leave empty, if USE_ALREADY_CREATED=True, then copy a value of PROFILE_NAME variable of profile you want to use
+      PROFILE_NAME_REF: "-" # or leave empty, if USE_ALREADY_CREATED=True, then copy a value of PROFILE_NAME variable of a profile you want to use
       PLACE_NAME: "Tartu, Tartu linn, Tartu maakond, Estonia"
       NETWORK_TYPE: "walk"
       OSM_TAGS_FOR_HOME_AND_WORK: ["building"]
       OSM_TAGS_FOR_EVENT: ["amenity", "leisure", "tourism"]
 
     USER_PARAMS:
-      USER_MODULE_PATH: "gps_synth.user"
+      USER_MODULE_PATH: "gps_synth.user.user_walk"
       USER_CLASS: "User_walk"
       NUM_USERS: 2
       DATE_BEGGINING: "2022-07-22"
@@ -32,8 +32,17 @@ PROFILES:
       MIN_DISTANCE_W_R: 200
       MEAN_VELOCITY_MS: 1.1
       PROXIMITY_TO_ROAD: 2
-
+# output section
 OUTPUT:
-  GPS: "output_files/gps_data"
-  NETWORK_TABLES: "output_files/network_data"
-  METADATA: "output_files/metadata"
+  # if True deletes all output folders and their content
+  DO_CLEAR_OUTPUT: False
+  # you can use this to specified some custom partitioning although currently
+  # it seems logical to partition all output by profile_name which is
+  # a default approach in gps_synth.common.functions.write_df_to_parquet
+  PARTITION_COLUMNS: ["profile_name"]
+  # paths to appenf to GPS_GENERATOR path
+  # make sure you run the script in GPS_GENERATOR directory
+  FOLDERS:
+    GPS: "output_files/gps_data"
+    NETWORK_TABLES: "output_files/network_data"
+    METADATA: "output_files/metadata"
