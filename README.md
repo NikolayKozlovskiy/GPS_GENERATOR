@@ -1,6 +1,6 @@
 # GPS_GENERATOR
 
-![GPS_GENERATOR_EXAMPLE](./img/gps_generator_example.png)
+![GPS_GENERATOR_EXAMPLE](./img/synth_gps_data_example.png)
 
 ## Overview :fax:
 
