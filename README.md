@@ -111,4 +111,4 @@ I am arrogant enough to think that this project might be interesting for someone
 
 ## ![Positium](./img/positium.png) Aknowledgements
 
-The concept and initial development of this project began during my internship at [Positium](https://positium.com/). For more details on the project's origins, please see the `archive` folder, which includes a PDF documentation (useful for understanding the overall logic) and a Jupyter notebook (not for execution). The evolution of the `GPS_GENERATOR` was also influenced by my experience at Positium, where I had the opportunity to explore various development practices."
+The concept and initial development of this project began during my internship at [Positium](https://positium.com/). For more details on the project's origins, please see the `archive` folder, which includes a PDF documentation (useful for understanding the overall logic) and a Jupyter notebook (not for execution). The evolution of the `GPS_GENERATOR` was also influenced by my experience at Positium, where I had the opportunity to explore various development practices.
