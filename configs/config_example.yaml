@@ -49,7 +49,7 @@ PROFILES:
 
     NETWORK_PARAMS:
       USE_ALREADY_CREATED: True # if USE_ALREADY_CREATED=True, then copy a value of NETWORK_NAME variable of a network  you want to use, make sure it is already created
-      NETWORK_NAME: "bla" # two profiles share the same network and to not compute it twice, reference to the previous one
+      NETWORK_NAME: "tartu_walk" # two profiles share the same network and to not compute it twice, reference to the previous one
 
     USER_PARAMS:
       USER_MODULE_PATH: "gps_synth.user.user_employed_walk"

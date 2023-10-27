@@ -81,6 +81,8 @@ def write_df_to_parquet(df: DataFrame, base_dir: str, partition_cols: Optional[L
 
     del (df)
 
+    # if path exists - overwrite
+    # if path is unqiue - append
     ds.write_dataset(table, base_dir=base_dir, format='parquet', partitioning=partition_cols,
                      existing_data_behavior='overwrite_or_ignore',
                      partitioning_flavor='hive', basename_template='part-{i}' + f'{uuid.uuid4().hex}.parquet')
