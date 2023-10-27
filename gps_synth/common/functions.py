@@ -6,7 +6,7 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import uuid
 from pandas import DataFrame
-from typing import List, Optional
+from typing import List, Type, Optional
 
 
 def delete_directory(directory: str) -> None:
@@ -40,7 +40,17 @@ def check_or_create_dir(directory: str) -> None:
         raise
 
 
-def class_getter(module_path: str, class_name: str) -> __build_class__:
+def class_getter(module_path: str, class_name: str) -> Type:
+    """
+    Create a pecified class
+
+    Args: 
+        module_path (str): _description_
+        class_name (str): _description_
+
+    Returns: 
+        Type: A class (https://stackoverflow.com/a/23198094)
+    """
     module = importlib.import_module(module_path)
     class_result = getattr(module, class_name)
 
@@ -58,6 +68,7 @@ def write_df_to_parquet(df: DataFrame, base_dir: str, partition_cols: Optional[L
         base_dir (str): Base directory where to write data
         partition_cols (Optional[List[str]] = None): A list of columns to use for partitioning, if None use [profile_name]
     """
+
     partition_cols = [
         "profile_name"] if partition_cols is None else partition_cols
 
@@ -73,4 +84,3 @@ def write_df_to_parquet(df: DataFrame, base_dir: str, partition_cols: Optional[L
     ds.write_dataset(table, base_dir=base_dir, format='parquet', partitioning=partition_cols,
                      existing_data_behavior='overwrite_or_ignore',
                      partitioning_flavor='hive', basename_template='part-{i}' + f'{uuid.uuid4().hex}.parquet')
-    return None

@@ -4,45 +4,75 @@ LOGGING:
   FORMAT: "%(asctime)s %(filename)s: %(message)s"
   DATEFMT: "%Y-%m-%d %H:%M:%S"
 
+# GPS_Generator class manipulates the users' ans netwroks' class(es) to create final gps results and its followings (e.g., metadata)
 INIT:
   GPS_GENERATOR_PATH: "gps_synth.gps_generator"
   GPS_GENERATOR_CLASS: "GPS_Generator"
 
+# Current logic:
+# # a new profile is created if either network's or users' params are changed (ideally, date ranges of users should not overlap)
+# # each new profile should have understandable and unique profile name
+# # to create a network one class Netwrok is used since by now the workflow for netwrok creation seem universal
+# # profiles can share a similiar (identical) network (meaning network params are the same) and this is why a network should be referenced by its own unique name not profile name
+# # this is done for the sake of efficiency so if two profiles have the same network params we don't compute identical networks (and also store it) but use already created
+# # to create users several classes could be used, but each of them should have an abstract class User as their parent
+# # profiles can not have the same users' GPS data (meaning that even if users params are identical still output GPS data (trajectories) will be different)
+# # this is why users (or more precisely their output GPS) can be referenced by profile names althouhg it may cause some confusion
+
 PROFILES:
   PROFILE_1:
-    PROFILE_NAME: "tartu_adult_employed_walk"
+    PROFILE_NAME: "tartu_user_employed_walk" # must be unique
 
     NETWORK_PARAMS:
       NETWORK_MODULE_PATH: "gps_synth.network"
       NETWORK_CLASS: "Network"
       USE_ALREADY_CREATED: False
-      PROFILE_NAME_REF: "-" # or leave empty, if USE_ALREADY_CREATED=True, then copy a value of PROFILE_NAME variable of a profile you want to use
+      NETWORK_NAME: "tartu_walk"
       PLACE_NAME: "Tartu, Tartu linn, Tartu maakond, Estonia"
       NETWORK_TYPE: "walk"
       OSM_TAGS_FOR_HOME_AND_WORK: ["building"]
       OSM_TAGS_FOR_EVENT: ["amenity", "leisure", "tourism"]
 
     USER_PARAMS:
-      USER_MODULE_PATH: "gps_synth.user.user_walk"
-      USER_CLASS: "User_walk"
+      USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
+      USER_CLASS: "User_employed_walk"
       NUM_USERS: 2
       DATE_BEGGINING: "2022-07-22"
       DATE_END: "2022-07-25"
+      MIN_DISTANCE_H_W: 300 # min distance between home and work anchors (initially was implemnted for a vis purpose so the trajectories would be sparse)
+      MIN_DISTANCE_W_R: 200 # min distance between  work and regular event anchoirs (initially was implemnted for a vis purpose so the trajectories would be sparse)
+      MEAN_VELOCITY_MS: 1.1 # speed limit which a user does not usually exceeds (it does happen rarely), but in the end their speed would somewhere around this value
+      PROXIMITY_TO_ROAD: 2 # when a user moves how their GPS points could be away from a road, used to create so called a chaotic point
+
+  PROFILE_2:
+    PROFILE_NAME: "tartu_user_employed_walk_2"
+
+    NETWORK_PARAMS:
+      USE_ALREADY_CREATED: True # if USE_ALREADY_CREATED=True, then copy a value of NETWORK_NAME variable of a network  you want to use, make sure it is already created
+      NETWORK_NAME: "bla" # two profiles share the same network and to not compute it twice, reference to the previous one
+
+    USER_PARAMS:
+      USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
+      USER_CLASS: "User_employed_walk"
+      NUM_USERS: 5
+      DATE_BEGGINING: "2023-07-22" # date range is changed
+      DATE_END: "2023-07-25"
       MIN_DISTANCE_H_W: 300
       MIN_DISTANCE_W_R: 200
       MEAN_VELOCITY_MS: 1.1
       PROXIMITY_TO_ROAD: 2
 # output section
-OUTPUT:
-  # if True deletes all output folders and their content
-  DO_CLEAR_OUTPUT: False
-  # you can use this to specified some custom partitioning although currently
-  # it seems logical to partition all output by profile_name which is
-  # a default approach in gps_synth.common.functions.write_df_to_parquet
-  PARTITION_COLUMNS: ["profile_name"]
-  # paths to appenf to GPS_GENERATOR path
+# if True deletes all output folders and their content
+DO_CLEAR_OUTPUT: True
+OUTPUTS:
+  # paths to append to GPS_GENERATOR path
   # make sure you run the script in GPS_GENERATOR directory
-  FOLDERS:
-    GPS: "output_files/gps_data"
-    NETWORK_TABLES: "output_files/network_data"
-    METADATA: "output_files/metadata"
+  # default behaviour - partition by profile_name, if you want a custom partitioning
+  # add PARTITION_COLUMNS option like it is done for NETWORK_TABLES
+  GPS:
+    PATH: "output_files/gps_data"
+  NETWORK_TABLES:
+    PATH: "output_files/network_data"
+    PARTITION_COLUMNS: ["network_name"]
+  METADATA:
+    PATH: "output_files/metadata"

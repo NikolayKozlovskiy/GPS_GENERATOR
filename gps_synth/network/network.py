@@ -7,6 +7,7 @@ from gps_synth.common.columns import ColNames
 
 class Network:
     def __init__(self, profile_network_config):
+        self.network_name = profile_network_config["NETWORK_NAME"]
         self.place_name = profile_network_config['PLACE_NAME']
         self.network_type = profile_network_config['NETWORK_TYPE']
         self.osm_tags_for_hw = profile_network_config['OSM_TAGS_FOR_HOME_AND_WORK']

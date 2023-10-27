@@ -4,6 +4,7 @@ class ColNames:
     lon = 'lon'
     lat = 'lat'
     profile_name = 'profile_name'
+    network_name = 'network_name'
     centre_x = 'centre_x'
     centre_y = 'centre_y'
     home_id = 'home_id'
