@@ -90,6 +90,8 @@ Example of the output structure:
         └── part-[hex].parquet
 ```
 
+P.S. In `vis_notebook.ipynb` there are some approaches implemented to visualise and analyse results, if you want to run it type `make run_jupyter_lab` (for Docker) or just `jupyter lab` (for Conda), make sure you specify correct params in the beginning of the notebook. To terminate the session in both cases press `Crtl+C`
+
 ## How to contribute :pill:
 
 I am arrogant enough to think that this project might be interesting for someone. Below is a list of issues which can make the results more humanlike, diverse, and effecient.
