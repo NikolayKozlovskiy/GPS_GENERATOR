@@ -17,8 +17,8 @@ class Network:
         self.graph_crs = None
         self.nodes = None
 
-        self.df_hw = None
-        self.df_event = None
+        self.gdf_hw = None
+        self.gdf_event = None
 
     def prepare_graph(self, place_name: str, network_type: str) -> None:
         """
@@ -68,16 +68,14 @@ class Network:
 
         gdf_locations = gdf_locations[geometry_condition][columns_to_save].to_crs(
             graph_crs)
-        gdf_locations[ColNames.centre_x] = gdf_locations['geometry'].centroid.x
-        gdf_locations[ColNames.centre_y] = gdf_locations['geometry'].centroid.y
-        df_locations = gdf_locations.drop(columns='geometry')
-        df_locations['nearest_node_id'], df_locations['distance_to_node'] = ox.distance.nearest_nodes(
-            graph_proj, df_locations[ColNames.centre_x], df_locations[ColNames.centre_y], return_dist=True)
+        gdf_locations["geometry"] = gdf_locations["geometry"].centroid
+        gdf_locations['nearest_node_id'], gdf_locations['distance_to_node'] = ox.distance.nearest_nodes(
+            graph_proj, gdf_locations["geometry"].x, gdf_locations["geometry"].y, return_dist=True)
 
-        return df_locations
+        return gdf_locations
 
     def get_specific_type_of_locations(self,
-                                       df_locations: DataFrame,
+                                       gdf_locations: DataFrame,
                                        filter_columns: List[str],
                                        delete_columns: List[str]) -> DataFrame:
         """
@@ -93,7 +91,7 @@ class Network:
             DataFrame: Filtered locations dataframe
         """
 
-        return df_locations[df_locations[filter_columns].notnull().any(axis=1)][list(set(df_locations.columns) - set(delete_columns))]\
+        return gdf_locations[gdf_locations[filter_columns].notnull().any(axis=1)][list(set(gdf_locations.columns) - set(delete_columns))]\
             .reset_index()
 
     def run(self):
@@ -101,7 +99,7 @@ class Network:
         # prepare graph and enrich instance attributes
         self.prepare_graph(self.place_name, self.network_type)
         # create location for anchor points
-        df_locations = self.create_locations(
+        gdf_locations = self.create_locations(
             self.place_name, self.osm_tags_for_hw, self.osm_tags_for_event, self.graph_proj, self.graph_crs)
 
         filter_columns_hw = self.osm_tags_for_hw
@@ -110,8 +108,10 @@ class Network:
         delete_columns = filter_columns_hw + filter_columns_event
 
         # filter locations for home and work anchor points and store in df_hw attribute
-        self.df_hw = self.get_specific_type_of_locations(
-            df_locations, filter_columns_hw, delete_columns)
+        self.gdf_hw = self.get_specific_type_of_locations(
+            gdf_locations, filter_columns_hw, delete_columns)
         # filter locations for event anchor points and store in df_event attribute
-        self.df_event = self.get_specific_type_of_locations(
-            df_locations, filter_columns_event, delete_columns)
+        self.gdf_event = self.get_specific_type_of_locations(
+            gdf_locations, filter_columns_event, delete_columns)
+        
+        del(gdf_locations)

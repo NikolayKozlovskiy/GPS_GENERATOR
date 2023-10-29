@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import random
 import math
+import shapely
 from datetime import timedelta
 from typing import List, Tuple, Union
 from networkx import MultiDiGraph
@@ -11,8 +12,6 @@ from pandas import DataFrame, Timestamp
 from geopandas import GeoDataFrame
 from pyproj import Transformer, CRS, Geod
 from shapely.geometry import LineString, Point
-from gps_synth.common.columns import ColNames
-from gps_synth.network.network import Network
 
 # User class is a parent class of all child classes specified in user package
 # User class is an abtract class and is not meant to be initiated
@@ -29,8 +28,8 @@ class User(ABC):
         self.Network = Network
         self.date_range = pd.date_range(profile_user_config['DATE_BEGGINING'],
                                         profile_user_config['DATE_END'], freq='d')
-        self.min_distance_h_w = profile_user_config['MIN_DISTANCE_H_W']
-        self.min_distance_w_r = profile_user_config['MIN_DISTANCE_W_R']
+        self.radius_buffer_h_w = profile_user_config["RADIUS_BUFFER_H_W"]
+        self.radius_buffer_h_r = profile_user_config["RADIUS_BUFFER_H_R"]
         self.mean_velocity_ms = profile_user_config['MEAN_VELOCITY_MS']
         self.proximity_to_road = profile_user_config['PROXIMITY_TO_ROAD']
         self.transformer_to_WGS = Transformer.from_crs(
@@ -42,68 +41,99 @@ class User(ABC):
 
         self.data_array = []
 
+    def get_random_id_within_buffer(self, 
+                                    center_point: Point, 
+                                    radius_buffer: int, 
+                                    gdf_locations: GeoDataFrame) -> Union[int,None]:
+        """
+        Find a random id of a location which is within a buffer, created around center point with specified distance. 
+        A center point should be surronded with some amount of needed locations, otherwise None 
+
+        Args: 
+            center_point (Point): A point around which create a buffer
+            radius_buffer (int): A radius of a buffer
+            gdf_locations (GeoDataFrame): Locations to filter with condition "within a buffer"
+        
+        Returns: 
+            int: Random id among filtered loctions or None if home anchor is too near to border of a place
+        """
+        
+        buffer = shapely.buffer(center_point, distance=radius_buffer)
+        index_list = gdf_locations[gdf_locations.within(buffer)].index
+        # TODO: 20 is arbitary threshold, e.g. there could be just a case that a place does not have 
+        # some types of locations in many quantaties, think about how logically define this value 
+        # and make it as another positional argument
+        if len(index_list)>=20:
+            random_id = random.choice(gdf_locations[gdf_locations.within(buffer)].index)
+            return random_id
+        else:
+            return None
+
     def get_meaningful_locations(self,
-                                 nodes: GeoDataFrame,
-                                 df_hw: DataFrame,
-                                 df_event: DataFrame,
-                                 min_distance_h_w: int,
-                                 min_distance_w_r: int) -> None:
+                                 gdf_hw: GeoDataFrame,
+                                 gdf_event: GeoDataFrame,
+                                 radius_buffer_h_w: int,
+                                 radius_buffer_h_r: int) -> None:
         """
         Create meaningful locations for a user: one home, one work, several regular events
         The distribution of meaningful locations should follow some distance conditions. 
         Store computed anchors in correponding instance attributes
 
         Args: 
-            nodes (GeoDataFrame): Nodes of network's graph
-            df_hw (DataFrame): Set of locations of a network to choose from for home and work anchors
-            df_event (DataFrame): Set of locations of a network to choose from for regular event anchors
-            min_distance_h_w (int): Minimal distance between home and work in meteres (to not make them to close - was done more for vis purposes)
-            min_distance_w_r (int): Minimal distance between work and regular event in meteres (to not make them to close - was done more for vis purposes)
+            gdf_hw (GeoDataFrame): Set of locations of a network to choose from for home and work anchors
+            gdf_event (GeoDataFrame): Set of locations of a network to choose from for regular event anchors
+            radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for work anchor
+            radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for regular event anchors
         """
 
+        home_id = random.randint(0, len(gdf_hw)-1)
+        home_geometry = gdf_hw.iloc[home_id]['geometry']
+        # TODO: too conditionally nested think about a better approach
         while True:
-            home_id = random.randint(0, len(df_hw)-1)
-            work_id = random.randint(0, len(df_hw)-1)
-            home_node = nodes.loc[df_hw.iloc[home_id]
-                                  ['nearest_node_id']]
-            work_node = nodes.loc[df_hw.iloc[work_id]
-                                  ['nearest_node_id']]
-            distance_to_h = df_hw.iloc[home_id]['distance_to_node']
-            distance_to_w = df_hw.iloc[work_id]['distance_to_node']
-            final_distance = ox.distance.euclidean_dist_vec(home_node['y'], home_node['x'], work_node['y'], work_node['x'])\
-                + distance_to_h+distance_to_w
-            if final_distance >= min_distance_h_w:  # meters
+
+            work_id = self.get_random_id_within_buffer(home_geometry, radius_buffer_h_w, gdf_hw)
+            # if there are not many possible work anchor locations around
+            if work_id == None:
+                # chnage home id 
+                home_id = random.randint(0, len(gdf_hw)-1)
+                home_geometry = gdf_hw.iloc[home_id]['geometry']
+                continue
+            # if the same just choose another work id, but don't change home anchor
+            elif home_id == work_id:
+                continue
+
+            else: 
                 regular_locations_ids = []
                 number_of_regular_locations = random.randint(3, 5)
                 i = 0
                 while i <= number_of_regular_locations:
-                    regular_id = random.randint(0, len(df_event)-1)
-                    regular_node = nodes.loc[df_event.iloc[regular_id]
-                                             ['nearest_node_id']]
-                    distance_to_reg_loc = df_event.iloc[regular_id]['distance_to_node']
-                    if ox.distance.euclidean_dist_vec(regular_node['y'], regular_node['x'], work_node['y'], work_node['x'])\
-                            + distance_to_reg_loc + distance_to_w >= min_distance_w_r:  # meters
+                    regular_id = self.get_random_id_within_buffer(home_geometry, radius_buffer_h_r, gdf_event)
+
+                    # if there are not many possible regular event anchors around increase search radius
+                    if regular_id == None:
+                        radius_buffer_h_r += 100
+                        continue
+                    # if id is already used, chooses another one
+                    elif regular_id in regular_locations_ids or regular_id==home_id or regular_id==work_id:
+                        continue
+                    else:
                         regular_locations_ids.append(regular_id)
                         i += 1
-                    else:
-                        continue
+
                 self.home_id = home_id
                 self.work_id = work_id
                 self.regular_loc_array = regular_locations_ids
-
                 break
-            else:
-                continue
 
     def get_regular_or_random_loc(self,
-                                  df_event: DataFrame,
+                                  gdf_event: GeoDataFrame,
                                   regular_location_ids: List[int],
                                   number_of_events: int) -> List[int]:
         """
         Randomly create a list with specified number of event ids, which could be either from regular event locations or completely accidental
 
         Args: 
-            df_event (DataFrame): Set of locations of a network to choose from for regular event anchors
+            gdf_event (GeoDataFrame): Set of locations of a network to choose from for regular event anchors
             regular_location_ids (List[int]): List of regular event locations' ids
             number_of_events (int): A number of event ids tom create
 
@@ -117,7 +147,7 @@ class User(ABC):
             if choose_reg_or_random == "reg":
                 event_id = random.choice(regular_location_ids)
             else:
-                event_id = random.randint(0, len(df_event)-1)
+                event_id = random.randint(0, len(gdf_event)-1)
 
             if event_id not in event_id_list:
                 event_id_list.append(event_id)
@@ -141,14 +171,14 @@ class User(ABC):
         list_of_info = []
         for loc_id in list_of_ids:
             list_of_info.append([df_loc.iloc[loc_id]['nearest_node_id'],
-                                df_loc.iloc[loc_id][ColNames.centre_x],
-                                df_loc.iloc[loc_id][ColNames.centre_y]])
+                                df_loc.iloc[loc_id]['geometry'].x,
+                                df_loc.iloc[loc_id]['geometry'].y])
 
         return list_of_info
 
     def create_list_of_locations(self,
-                                 df_hw: DataFrame,
-                                 df_event: DataFrame,
+                                 gdf_hw: GeoDataFrame,
+                                 gdf_event: GeoDataFrame,
                                  home_id: int,
                                  work_id: int,
                                  regular_location_ids: List[int],
@@ -158,8 +188,8 @@ class User(ABC):
         and derive information about them
 
         Args:
-            df_hw (DataFrame): Set of locations (and their features) of a network to use from for home and work anchors
-            df_event (DataFrame): Set of locations (and their features) of a network to use for regular and random event anchors
+            gdf_hw (GeoDataFrame): Set of locations (and their features) of a network to use from for home and work anchors
+            gdf_event (GeoDataFrame): Set of locations (and their features) of a network to use for regular and random event anchors
             home_id (int): Id of home anchor
             work_id (int): Id of work anchor
             regular_location_ids (List[int]): List of regular event locations' ids
@@ -179,12 +209,12 @@ class User(ABC):
             list_of_ids = [home_id]
 
         event_id_list = self.get_regular_or_random_loc(
-            df_event, regular_location_ids, number_of_events)
+            gdf_event, regular_location_ids, number_of_events)
 
         list_of_locations_not_event = self.get_info_about_loc(
-            df_hw, list_of_ids)
+            gdf_hw, list_of_ids)
         list_of_locations_event = self.get_info_about_loc(
-            df_event, event_id_list)
+            gdf_event, event_id_list)
 
         list_of_locations = list_of_locations_not_event + list_of_locations_event
 

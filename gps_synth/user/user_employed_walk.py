@@ -13,12 +13,12 @@ class User_employed_walk(User):
         self.child_class_name = "User_walk"
 
     def get_meaningful_locations(self):
-        super().get_meaningful_locations(self.Network.nodes,
-                                         self.Network.df_hw,
-                                         self.Network.df_event,
-                                         self.min_distance_h_w,
-                                         self.min_distance_w_r)
+        super().get_meaningful_locations(self.Network.gdf_hw,
+                                         self.Network.gdf_event,
+                                         self.radius_buffer_h_w,
+                                         self.radius_buffer_h_r)
 
+                                        
     def random_plot_of_day(self,
                            time_start: Timestamp,
                            beggining_of_day: Timestamp,
@@ -155,8 +155,8 @@ class User_employed_walk(User):
             day = self.date_range[i]
             day_of_week = day.isoweekday()
 
-            list_of_locations = super().create_list_of_locations(self.Network.df_hw,
-                                                                 self.Network.df_event,
+            list_of_locations = super().create_list_of_locations(self.Network.gdf_hw,
+                                                                 self.Network.gdf_event,
                                                                  self.home_id,
                                                                  self.work_id,
                                                                  self.regular_loc_array,

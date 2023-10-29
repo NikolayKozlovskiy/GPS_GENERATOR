@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import logging
 import pandas as pd
+import geopandas as gpd
 from pyproj import Transformer, CRS
 from typing import Any, List, Dict, Optional
 from gps_synth.common.functions import class_getter, check_or_create_dir, delete_directory, write_df_to_parquet
@@ -143,17 +144,14 @@ class GPS_Generator():
 
         for network_name, network in network_dictionary.items():
 
-            network_df = pd.DataFrame(pd.concat([network.df_hw.assign(
-                loc_type="hw"), network.df_event.assign(loc_type="event")], ignore_index=True))
+            network_gdf = gpd.GeoDataFrame(pd.concat([network.gdf_hw.assign(
+                loc_type="hw"), network.gdf_event.assign(loc_type="event")], ignore_index=True)).to_crs(4326)
+            
+            network_gdf[ColNames.centre_x] = network_gdf['geometry'].x
+            network_gdf[ColNames.centre_y] = network_gdf['geometry'].y
 
-            network_df = network_df.drop(
-                columns=['nearest_node_id', 'distance_to_node'])
-
-            transformer_to_WGS = Transformer.from_crs(
-                network.graph_crs, crs_4326, always_xy=True)
-
-            network_df[ColNames.centre_x], network_df[ColNames.centre_y] = transformer_to_WGS.transform(
-                network_df[ColNames.centre_x], network_df[ColNames.centre_y])
+            network_df = network_gdf.drop(
+                columns=['nearest_node_id', 'distance_to_node', 'geometry'])
 
             network_df[ColNames.network_name] = network_name
 
@@ -187,9 +185,9 @@ class GPS_Generator():
             # network_name is needed to make it clear in what particular network to search for locations by ids
             # alternatice way is to look in config
             metadata_data_df = pd.DataFrame([[user.user_id,
-                                              network.df_hw.iloc[user.home_id]['osmid'],
-                                              network.df_hw.iloc[user.work_id]['osmid'],
-                                              network.df_event.iloc[user.regular_loc_array]['osmid'].values,
+                                              network.gdf_hw.iloc[user.home_id]['osmid'],
+                                              network.gdf_hw.iloc[user.work_id]['osmid'],
+                                              network.gdf_event.iloc[user.regular_loc_array]['osmid'].values,
                                               profile_name,
                                               network_name] for user in users],
                                             columns=[ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile_name, ColNames.network_name])
@@ -229,7 +227,7 @@ class GPS_Generator():
                 network = self.create_network(profile_network_config)
                 self.network_dictionary[profile_network_config["NETWORK_NAME"]] = network
             self.logger.info(
-                f"Network for profile '{profile_name}' is generated")
+                f"Network for profile '{profile_name}' is generated, network name: {profile_network_config['NETWORK_NAME']}")
 
             self.users_network_dict[profile_name] = profile_network_config["NETWORK_NAME"]
 

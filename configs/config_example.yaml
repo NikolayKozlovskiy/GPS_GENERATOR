@@ -36,13 +36,13 @@ PROFILES:
     USER_PARAMS:
       USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
       USER_CLASS: "User_employed_walk"
-      NUM_USERS: 2
-      DATE_BEGGINING: "2022-07-22"
-      DATE_END: "2022-07-25"
-      MIN_DISTANCE_H_W: 300 # min distance between home and work anchors (initially was implemnted for a vis purpose so the trajectories would be sparse)
-      MIN_DISTANCE_W_R: 200 # min distance between  work and regular event anchoirs (initially was implemnted for a vis purpose so the trajectories would be sparse)
+      NUM_USERS: 15
+      DATE_BEGGINING: "2022-07-18"
+      DATE_END: "2022-07-24"
+      RADIUS_BUFFER_H_W: 1000 # in meters, a radius to create a buffer around home anchor to search for work anchor
+      RADIUS_BUFFER_H_R: 1000 # in meters, a radius to create a buffer around home anchor to search for regular event anchors
       MEAN_VELOCITY_MS: 1.1 # speed limit which a user does not usually exceeds (it does happen rarely), but in the end their speed would somewhere around this value
-      PROXIMITY_TO_ROAD: 2 # when a user moves how their GPS points could be away from a road, used to create so called a chaotic point
+      PROXIMITY_TO_ROAD: 2 # when a user moves how far their GPS points could be away from a road, used to create so called a chaotic point
 
   PROFILE_2:
     PROFILE_NAME: "tartu_user_employed_walk_2"
@@ -54,16 +54,16 @@ PROFILES:
     USER_PARAMS:
       USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
       USER_CLASS: "User_employed_walk"
-      NUM_USERS: 5
-      DATE_BEGGINING: "2023-07-22" # date range is changed
-      DATE_END: "2023-07-25"
-      MIN_DISTANCE_H_W: 300
-      MIN_DISTANCE_W_R: 200
+      NUM_USERS: 10
+      DATE_BEGGINING: "2023-07-17" # date range is changed
+      DATE_END: "2023-07-23"
+      RADIUS_BUFFER_H_W: 1500
+      RADIUS_BUFFER_H_R: 1200
       MEAN_VELOCITY_MS: 1.1
       PROXIMITY_TO_ROAD: 2
 # output section
 # if True deletes all output folders and their content
-DO_CLEAR_OUTPUT: True
+DO_CLEAR_OUTPUT: False
 OUTPUTS:
   # paths to append to GPS_GENERATOR path
   # make sure you run the script in GPS_GENERATOR directory

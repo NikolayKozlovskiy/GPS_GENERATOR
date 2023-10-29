@@ -66,28 +66,28 @@ Example of the output structure:
 ├── gps_data
 │   │
 │   ├── profile_name=profile_name_1
-│   │   ├── part-[hex].parquet
-│   │   └── part-[hex].parquet
+│   │   ├── part-{i}[hex].parquet
+│   │   └── part-{i}[hex].parquet
 │   │
 │   └── profile_name=profile_name_2
-│       ├── part-[hex].parquet
-│       └── part-[hex].parquet
+│       ├── part-{i}[hex].parquet
+│       └── part-{i}[hex].parquet
 │
 ├── metadata
 │   │
 │   ├── profile_name=profile_name_1
-│   │   ├── part-[hex].parquet
-│   │   └── part-[hex].parquet
+│   │   ├── part-{i}[hex].parquet
+│   │   └── part-{i}[hex].parquet
 │   │
 │   └── profile_name=profile_name_2
-│       ├── part-[hex].parquet
-│       └── part-[hex].parquet
+│       ├── part-{i}[hex].parquet
+│       └── part-{i}[hex].parquet
 │
 └── network_data
     │
     └── network_name=network_name_1
-        ├── part-[hex].parquet
-        └── part-[hex].parquet
+        ├── part-{i}[hex].parquet
+        └── part-{i}[hex].parquet
 ```
 
 P.S. In `notebooks/vis_notebook.ipynb` there are some approaches implemented to visualise and analyse results, if you want to run it type `make run_jupyter_lab` (for Docker) or just `jupyter lab` (for Conda), make sure you specify correct params in the beginning of the notebook. To terminate the session in both cases press `Crtl+C`
@@ -109,7 +109,8 @@ I am arrogant enough to think that this project might be interesting for someone
 - new movement plots
 
 3. In terms of growing number of profiles possible rethinking of orchestration approach
-4. Different testing (but this is in a different life)
+4. Code optimization (e.g. in get_meaningful_locations())
+5. Testing (but this is in a different life)
 
 ## ![Positium](./img/positium.png) Aknowledgements
 
