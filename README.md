@@ -90,7 +90,7 @@ Example of the output structure:
         └── part-[hex].parquet
 ```
 
-P.S. In `vis_notebook.ipynb` there are some approaches implemented to visualise and analyse results, if you want to run it type `make run_jupyter_lab` (for Docker) or just `jupyter lab` (for Conda), make sure you specify correct params in the beginning of the notebook. To terminate the session in both cases press `Crtl+C`
+P.S. In `notebooks/vis_notebook.ipynb` there are some approaches implemented to visualise and analyse results, if you want to run it type `make run_jupyter_lab` (for Docker) or just `jupyter lab` (for Conda), make sure you specify correct params in the beginning of the notebook. To terminate the session in both cases press `Crtl+C`
 
 ## How to contribute :pill:
 
@@ -101,15 +101,15 @@ I am arrogant enough to think that this project might be interesting for someone
 - The path between the location and its nearest node can intersect buildings or water bodies (lakes). A user goes through them, it is not realistic
 - No gps like errors in the data (e.g. sudden termination of ‘acquiring’ data, or some points that do not make sense)
 
-2. Create more profiles and thus new User classes:
+2. Create more profiles and new User classes:
 
-- new locations
+- new places
 - new OSM tags for anchoir points
-- new modes of transport and even their combination
-- new plots
+- new modes of transport and their combination
+- new movement plots
 
 3. In terms of growing number of profiles possible rethinking of orchestration approach
-4. Load testing (but this is in a different life)
+4. Different testing (but this is in a different life)
 
 ## ![Positium](./img/positium.png) Aknowledgements
 

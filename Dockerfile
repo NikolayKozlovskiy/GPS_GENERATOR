@@ -15,15 +15,22 @@ ENV PATH="/root/.local/bin:$PATH"
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache \
     PYTHONPATH=/GPS_GENERATOR
 
-COPY pyproject.toml README.md ./
+# heated debate about the usage of poetry.lock  
+# https://stackoverflow.com/questions/61037557/should-i-commit-lock-file-changes-separately-what-should-i-write-for-the-commi
+# recommendations https://python-poetry.org/docs/basic-usage/#:~:text=You%20should%20commit%20the%20poetry,of%20dependencies%20(more%20below).
+COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install --with vis
+# delete --with vis if you don't need this optional group dependencies 
+RUN poetry install --with vis --no-root && rm -rf $POETRY_CACHE_DIR
 
 COPY configs ./configs
 COPY gps_synth ./gps_synth
+# comment out if you do not need to run notebooks in docker container
+COPY notebooks ./notebooks
 
-EXPOSE 8888
+RUN poetry install
 
 CMD ["tail", "-f", "/dev/null"]
