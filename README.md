@@ -26,7 +26,7 @@ The concept involves leveraging [Poetry](https://python-poetry.org/docs/#install
 2. Clone the repo: `git clone https://github.com/NikolayKozlovskiy/GPS_GENERATOR.git`
 3. Build a docker image called gps_generator: `make build_docker_image`
 4. Based on the image create a docker container named the same, which will constatntly run till it is removed, make sure you specified the correct paths for your source directories in [bind mounts](https://docs.docker.com/storage/bind-mounts/): `make create_docker_container OUTPUT_DIR=/path/to/output`
-5. Open new terminal and run the main.py script with CONFIG variable which is a relative path to a config file you want to use: `make run_main_script`. If you want to run some other commands use [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) option, make sure your container is running
+5. Open new terminal and run the main.py script with CONFIG variable which is a relative path to a config file you want to use: `make run_main_script` (make sure you are in `GPS_GENERATOR` directory). If you want to run some other commands use [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) option, make sure your container is running
 6. When you no longer need a container, remove it: `make remove_docker_container`\<br />
 
 Prerequirements:
