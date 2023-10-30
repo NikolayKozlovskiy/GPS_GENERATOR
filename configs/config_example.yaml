@@ -43,7 +43,7 @@ PROFILES:
       RADIUS_BUFFER_H_W: 1000 # in meters, a radius to create a buffer around home anchor to search for work anchor
       RADIUS_BUFFER_H_R: 1000 # in meters, a radius to create a buffer around home anchor to search for regular event anchors
       MEAN_MOVE_SPEED_MS: 1.1 # approximate mean speed of moving activity
-      PROXIMITY_TO_ROAD: 2 # when a user moves how far their GPS points could be away from a road, used to create so called a chaotic point
+      PROXIMITY_TO_ROAD: 2 # in meters, when a user moves how far their GPS points could be away from a road, used to create so called a chaotic point
 
   PROFILE_2:
     PROFILE_NAME: "tartu_user_employed_walk_2"
