@@ -2,7 +2,7 @@
 .vscode/
 cache/
 */cache/*
-.env
 /output_files*/
 log_dir/
 .ipynb_checkpoints/
+.DS_Store
