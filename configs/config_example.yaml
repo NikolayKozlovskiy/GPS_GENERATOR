@@ -36,12 +36,13 @@ PROFILES:
     USER_PARAMS:
       USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
       USER_CLASS: "User_employed_walk"
-      NUM_USERS: 15
+      NUM_USERS: 5
       DATE_BEGGINING: "2022-07-18"
       DATE_END: "2022-07-24"
+      # choose wisely e.g. 10 000 for tartu does not make sense
       RADIUS_BUFFER_H_W: 1000 # in meters, a radius to create a buffer around home anchor to search for work anchor
       RADIUS_BUFFER_H_R: 1000 # in meters, a radius to create a buffer around home anchor to search for regular event anchors
-      MEAN_VELOCITY_MS: 1.1 # speed limit which a user does not usually exceeds (it does happen rarely), but in the end their speed would somewhere around this value
+      MEAN_MOVE_SPEED_MS: 1.1 # approximate mean speed of moving activity
       PROXIMITY_TO_ROAD: 2 # when a user moves how far their GPS points could be away from a road, used to create so called a chaotic point
 
   PROFILE_2:
@@ -55,11 +56,11 @@ PROFILES:
       USER_MODULE_PATH: "gps_synth.user.user_employed_walk"
       USER_CLASS: "User_employed_walk"
       NUM_USERS: 10
-      DATE_BEGGINING: "2023-07-17" # date range is changed
+      DATE_BEGGINING: "2023-07-17" # date range and radius buffer are changed
       DATE_END: "2023-07-23"
       RADIUS_BUFFER_H_W: 1500
       RADIUS_BUFFER_H_R: 1200
-      MEAN_VELOCITY_MS: 1.1
+      MEAN_MOVE_SPEED_MS: 1.1
       PROXIMITY_TO_ROAD: 2
 # output section
 # if True deletes all output folders and their content
@@ -67,12 +68,15 @@ DO_CLEAR_OUTPUT: False
 OUTPUTS:
   # paths to append to GPS_GENERATOR path
   # make sure you run the script in GPS_GENERATOR directory
-  # default behaviour - partition by profile_name, if you want a custom partitioning
+  # default partition behaviour - partition by profile_name, if you want a custom partitioning
   # add PARTITION_COLUMNS option like it is done for NETWORK_TABLES
+  # default policy regarding existing data - for metadata and gps -> append
+  # for network - rewrite, since for different runs networks could be identical no need to store the same data
   GPS:
     PATH: "output_files/gps_data"
   NETWORK_TABLES:
     PATH: "output_files/network_data"
     PARTITION_COLUMNS: ["network_name"]
+    EXISTING_DATA_BEHAVIOUR: "delete_matching"
   METADATA:
     PATH: "output_files/metadata"

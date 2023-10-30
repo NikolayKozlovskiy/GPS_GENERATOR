@@ -30,7 +30,7 @@ class User(ABC):
                                         profile_user_config['DATE_END'], freq='d')
         self.radius_buffer_h_w = profile_user_config["RADIUS_BUFFER_H_W"]
         self.radius_buffer_h_r = profile_user_config["RADIUS_BUFFER_H_R"]
-        self.mean_velocity_ms = profile_user_config['MEAN_VELOCITY_MS']
+        self.mean_move_speed_ms = profile_user_config['MEAN_MOVE_SPEED_MS']
         self.proximity_to_road = profile_user_config['PROXIMITY_TO_ROAD']
         self.transformer_to_WGS = Transformer.from_crs(
             Network.graph_crs, crs_4326, always_xy=True)
@@ -318,7 +318,7 @@ class User(ABC):
                           end_node: int,
                           start_coords: Tuple[float, float],
                           end_coords: Tuple[float, float],
-                          mean_velocity_ms: Union[int, float],
+                          mean_move_speed_ms: Union[int, float],
                           proximity_to_road: int,
                           time_start: Timestamp) -> Timestamp:
         """
@@ -334,7 +334,7 @@ class User(ABC):
             end_node (int): Id of the nearest node to an end location
             start_coords Tuple[float, float]: Lon and lat of start location
             end_coords Tuple[float, float]: Lon and lat of end location
-            mean_velocity_ms Union[int, float]: _description_
+            mean_move_speed_ms Union[int, float]: _description_
             proximity_to_road (int): A distance to define how a chaotic point should be from a path
             time_start (Timestamp): Timestamp from which to start generating moving points
 
@@ -356,7 +356,7 @@ class User(ABC):
         # to make sure that the time difference between
         # two consecutive points is not higher than 10 seconds
         # To mimic GPS tracking frequency (it could be even 1 second, but then the amount of data could be enormous)
-        min_dist_between_conseq_points = mean_velocity_ms * 10
+        min_dist_between_conseq_points = mean_move_speed_ms * 10
 
         if path.length <= min_dist_between_conseq_points:
             number_of_points = 2
@@ -380,10 +380,10 @@ class User(ABC):
                     [points[i], chaotic_point]).length
                 # discard situations when start point and a chaotic point are too close and thus time difference would be too small
                 # we build the model and don't want to use a lot of memory
-                if distance_to_chaotic_point < mean_velocity_ms*2:
+                if distance_to_chaotic_point < mean_move_speed_ms*2:
                     time_to_chaotic_point = 2
                 else:
-                    time_to_chaotic_point = distance_to_chaotic_point/mean_velocity_ms
+                    time_to_chaotic_point = distance_to_chaotic_point/mean_move_speed_ms
 
                 # Add current point's coordinates and the time it was registered in data array
                 time_gps = time_start.round(freq='S')
@@ -399,10 +399,10 @@ class User(ABC):
                 distance_to_next_point = LineString(
                     [chaotic_point, points[i+1]]).length
                 # discard to precise situations
-                if distance_to_next_point < mean_velocity_ms*2:
+                if distance_to_next_point < mean_move_speed_ms*2:
                     time_to_next_point = 2
                 else:
-                    time_to_next_point = distance_to_next_point/mean_velocity_ms
+                    time_to_next_point = distance_to_next_point/mean_move_speed_ms
 
                 # Add chaotic point's coordinates and the time it was registered in data array
                 time_gps = time_start.round(freq='S')

@@ -73,7 +73,7 @@ class User_employed_walk(User):
                                                               list_of_locations[i][2]),
                                                              (list_of_locations[i+1][1],
                                                               list_of_locations[i+1][2]),
-                                                             self.mean_velocity_ms,
+                                                             self.mean_move_speed_ms,
                                                              self.proximity_to_road,
                                                              time_start=stay_activity_time)
             # stay at work till 17-19 p.m.
@@ -112,7 +112,7 @@ class User_employed_walk(User):
                                                               list_of_locations[i][2]),
                                                              (list_of_locations[i+1][1],
                                                               list_of_locations[i+1][2]),
-                                                             self.mean_velocity_ms,
+                                                             self.mean_move_speed_ms,
                                                              self.proximity_to_road,
                                                              time_start=stay_activity_time)
             # stay at event location between 1-3 hours
@@ -140,7 +140,7 @@ class User_employed_walk(User):
                                                               list_of_locations[i][2]),
                                                              (list_of_locations[0][1],
                                                               list_of_locations[0][2]),
-                                                             self.mean_velocity_ms,
+                                                             self.mean_move_speed_ms,
                                                              self.proximity_to_road,
                                                              time_start=stay_activity_time)
             # day is finished

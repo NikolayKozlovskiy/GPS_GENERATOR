@@ -1,5 +1,5 @@
-import pandas as pd
 import os
+import uuid
 import logging
 import pandas as pd
 import geopandas as gpd
@@ -51,7 +51,7 @@ class GPS_Generator():
 
         return network
 
-    def generate_users(self, network: Network, profile_user_config: Any, id_counter: int = 1) -> List[User]:
+    def generate_users(self, network: Network, profile_user_config: Any) -> List[User]:
         """
         Initialise User class and run it as many times as specified in NUM_USERS config param.
         Store instances in a list
@@ -59,7 +59,6 @@ class GPS_Generator():
         Args: 
             network (Network): An instance of Netwrok class to use for choosing anchoir points of a user
             profile_user_config (Any): YAML object with config params regarding users
-            id_counter (int=1): Unique integer numbers 
 
         Returns: 
             List[User]: list of instances of User class with completed run method
@@ -70,10 +69,11 @@ class GPS_Generator():
             profile_user_config['USER_MODULE_PATH'], profile_user_config['USER_CLASS'])
 
         for _ in range(profile_user_config['NUM_USERS']):
-            new_user = user_class(id_counter,
+            # ensure uniqueness of user ids in case of appending parquets 
+            user_id = uuid.uuid4().hex
+            new_user = user_class(user_id,
                                   network, profile_user_config)
             users_array.append(new_user)
-            id_counter += 1
 
         return users_array
 
@@ -97,7 +97,8 @@ class GPS_Generator():
     def output_gps(self,
                    users_dictionary: Dict[str, List[User]],
                    gps_output_folder_path: str,
-                   partition_columns: Optional[List[str]] = None) -> None:
+                   partition_columns: Optional[List[str]] = None,
+                   existing_data_behavior: Optional[str] = None) -> None:
         """
         Write users' synth GPS data with stated output schema for each profile
 
@@ -105,6 +106,7 @@ class GPS_Generator():
             users_dictionary (Dict[str, List[User]]): A dictionary where key is a name of a profile and a value is a list of User instances belonging to this profile
             gps_output_folder_path (str): A path to a folder to store GPS results (created as by appending sub-path to the base/parent path)
             partition_columns (List[str]): Columsn to use for partitioning
+            existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination
         """
 
         self.logger.info(f"Writing GPS data")
@@ -125,12 +127,13 @@ class GPS_Generator():
                 [gps_data_df, gps_data_profile_df], ignore_index=True)
 
         write_df_to_parquet(
-            gps_data_df, gps_output_folder_path, partition_columns)
+            gps_data_df, gps_output_folder_path, partition_columns, existing_data_behavior)
 
     def output_network_tables(self,
                               network_dictionary: Dict[str, Network],
                               network_output_folder_path: str,
-                              partition_columns: List[str]) -> None:
+                              partition_columns: List[str],
+                              existing_data_behavior: str) -> None:
         """
         Write network data with stated output schema for each profile
 
@@ -138,6 +141,7 @@ class GPS_Generator():
             network_dictionary (Dict[str, Network]): A dictionary where key is a name of a profile and a value is an instance of Network belonging to this profile
             network_output_folder_path (str): A path to a folder to store network data (created as by appending sub-path to the base/parent path)
             partition_columns (List[str]): Columsn to use for partitioning
+            existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination
         """
 
         self.logger.info(f"Writing Network tables")
@@ -156,14 +160,15 @@ class GPS_Generator():
             network_df[ColNames.network_name] = network_name
 
             write_df_to_parquet(
-                network_df, network_output_folder_path, partition_columns)
+                network_df, network_output_folder_path, partition_columns, existing_data_behavior)
 
     def output_metadata(self,
                         users_dictionary: Dict[str, List[User]],
                         network_dictionary: Dict[str, Network],
                         users_network_dict: Dict[str, str],
                         metadata_output_folder_path: str,
-                        partition_columns: Optional[List[str]] = None) -> None:
+                        partition_columns: Optional[List[str]] = None,
+                        existing_data_behavior: Optional[str] = None) -> None:
         """
         Write metadata with stated output schema for each profile to see anchor locations for every user (e.g. for checking purposes) 
 
@@ -173,6 +178,7 @@ class GPS_Generator():
             users_netwrok_dict (Dict[str, str]): Dictionaru to connect users to their network
             metadata_output_folder_path (str): A path to a folder to store GPS results (created as by appending sub-path to the base/parent path)
             partition_columns (List[str]): Columsn to use for partitioning
+            existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination
         """
         self.logger.info(f"Writing metadata")
 
@@ -193,7 +199,7 @@ class GPS_Generator():
                                             columns=[ColNames.user_id, ColNames.home_id, ColNames.work_id, ColNames.regular_loc_array, ColNames.profile_name, ColNames.network_name])
 
             write_df_to_parquet(
-                metadata_data_df, metadata_output_folder_path, partition_columns)
+                metadata_data_df, metadata_output_folder_path, partition_columns, existing_data_behavior)
 
     def run(self):
 
@@ -258,7 +264,8 @@ class GPS_Generator():
         self.output_network_tables(
             self.network_dictionary,
             self.config['OUTPUTS']['NETWORK_TABLES']['PATH'],
-            self.config['OUTPUTS']['NETWORK_TABLES']['PARTITION_COLUMNS'])
+            self.config['OUTPUTS']['NETWORK_TABLES']['PARTITION_COLUMNS'], 
+            self.config['OUTPUTS']['NETWORK_TABLES']['EXISTING_DATA_BEHAVIOUR'])
         self.output_metadata(
             self.users_dictionary, self.network_dictionary, self.users_network_dict,
             self.config['OUTPUTS']['METADATA']['PATH'])
