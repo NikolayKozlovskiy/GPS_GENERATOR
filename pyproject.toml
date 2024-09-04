@@ -13,6 +13,9 @@ osmnx = "1.6.0"
 scipy = "1.11.3"
 pyarrow = "13.0.0"
 PyYAML = "6.0.1"
+black = "^24.8.0"
+isort = "^5.13.2"
+pylint = "^3.2.7"
 
 [tool.poetry.group.vis]
 optional = true
@@ -29,3 +32,42 @@ folium = "^0.12.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.pylint.logging]
+
+logging-format-style = "old" # old, new
+logging-modules = ["logging"]
+
+[tool.pylint.format]
+
+max-line-length = "88"
+
+[tool.pylint.messages_control]
+
+disable = [
+    "invalid-name",
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "missing-final-newline",
+    "too-few-public-methods",
+    "too-many-locals",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+]
+
+[tool.pylint.miscellaneous]
+
+notes = [
+    "#TODO",
+    "# TODO",
+]
+
+[tool.isort]
+profile="black"
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312"]
+
+

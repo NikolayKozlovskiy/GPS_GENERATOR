@@ -1,11 +1,12 @@
 import importlib
 import os
 import shutil
+import uuid
+from typing import List, Optional, Type
+
 import pyarrow as pa
 import pyarrow.dataset as ds
-import uuid
 from pandas import DataFrame
-from typing import List, Type, Optional
 
 
 def delete_directory(directory: str) -> None:
@@ -43,11 +44,11 @@ def class_getter(module_path: str, class_name: str) -> Type:
     """
     Create a pecified class
 
-    Args: 
+    Args:
         module_path (str): _description_
         class_name (str): _description_
 
-    Returns: 
+    Returns:
         Type: A class (https://stackoverflow.com/a/23198094)
     """
     module = importlib.import_module(module_path)
@@ -56,26 +57,31 @@ def class_getter(module_path: str, class_name: str) -> Type:
     return class_result
 
 
-def write_df_to_parquet(df: DataFrame, 
-                        base_dir: str, 
-                        partition_cols: Optional[List[str]] = None,
-                        existing_data_behavior: Optional[str] = None) -> None:
+def write_df_to_parquet(
+    df: DataFrame,
+    base_dir: str,
+    partition_cols: Optional[List[str]] = None,
+    existing_data_behavior: Optional[str] = None,
+) -> None:
     """
     Writes dataframe to Parquet
     If df is empty, writes a file
     When using the same path, but with data, the file gets overwritten
 
-    Args: 
+    Args:
         df (DataFrame): Dataframe to write in parquet
         base_dir (str): Base directory where to write data
         partition_cols (Optional[List[str]] = None): A list of columns to use for partitioning, if None use [profile_name]
         existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination
     """
 
-    partition_cols = [
-        "profile_name"] if partition_cols is None else partition_cols
-    
-    existing_data_behavior = 'overwrite_or_ignore' if existing_data_behavior is None else existing_data_behavior
+    partition_cols = ["profile_name"] if partition_cols is None else partition_cols
+
+    existing_data_behavior = (
+        "overwrite_or_ignore"
+        if existing_data_behavior is None
+        else existing_data_behavior
+    )
 
     # If empty df was saved earlier, we need to delete it
     # in order to save the partitioned stuff
@@ -84,10 +90,16 @@ def write_df_to_parquet(df: DataFrame,
 
     table = pa.Table.from_pandas(df)
 
-    del (df)
+    del df
 
     # if path exists - overwrite
     # if path is unqiue - append
-    ds.write_dataset(table, base_dir=base_dir, format='parquet', partitioning=partition_cols,
-                     existing_data_behavior=existing_data_behavior,
-                     partitioning_flavor='hive', basename_template='part-{i}' + f'{uuid.uuid4().hex}.parquet')
+    ds.write_dataset(
+        table,
+        base_dir=base_dir,
+        format="parquet",
+        partitioning=partition_cols,
+        existing_data_behavior=existing_data_behavior,
+        partitioning_flavor="hive",
+        basename_template="part-{i}" + f"{uuid.uuid4().hex}.parquet",
+    )
