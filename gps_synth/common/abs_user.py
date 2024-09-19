@@ -11,7 +11,7 @@ import shapely
 from geopandas import GeoDataFrame
 from networkx import MultiDiGraph
 from pandas import DataFrame, Timestamp
-from pyproj import CRS, Geod, Transformer
+from pyproj import Geod, Transformer
 from shapely.geometry import LineString, Point
 
 # User class is a parent class of all child classes specified in user package
@@ -20,13 +20,10 @@ from shapely.geometry import LineString, Point
 # # concrete methods are meant to be called in child classes with super() function
 # # abstract methods are meant to show what methods should be in a child class, but their implementation is a subject of this child class
 
-crs_4326 = CRS.from_epsg(4326)
-
 
 class User(ABC):
-    def __init__(self, user_id: int, Network, profile_user_config):
+    def __init__(self, user_id: int, profile_user_config):
         self.user_id = user_id
-        self.Network = Network
         self.date_range = pd.date_range(
             profile_user_config["DATE_BEGGINING"],
             profile_user_config["DATE_END"],
@@ -36,9 +33,6 @@ class User(ABC):
         self.radius_buffer_h_r = profile_user_config["RADIUS_BUFFER_H_R"]
         self.mean_move_speed_ms = profile_user_config["MEAN_MOVE_SPEED_MS"]
         self.proximity_to_road = profile_user_config["PROXIMITY_TO_ROAD"]
-        self.transformer_to_WGS = Transformer.from_crs(
-            Network.graph_crs, crs_4326, always_xy=True
-        )
 
         self.home_id = None
         self.work_id = None
@@ -70,27 +64,28 @@ class User(ABC):
         if len(index_list) >= 20:
             random_id = random.choice(gdf_locations[gdf_locations.within(buffer)].index)
             return random_id
-        else:
-            return None
+
+        return None
 
     def get_meaningful_locations(
         self,
         gdf_hw: GeoDataFrame,
         gdf_event: GeoDataFrame,
-        radius_buffer_h_w: int,
-        radius_buffer_h_r: int,
     ) -> None:
         """
-        Create meaningful locations for a user: one home, one work, several regular events
+        Create meaningful locations for a user: one home, one work, several regular events,
+        the radius between home and work and home and regular locations are defined in the config
         The distribution of meaningful locations should follow some distance conditions.
         Store computed anchors in correponding instance attributes
 
         Args:
             gdf_hw (GeoDataFrame): Set of locations of a network to choose from for home and work anchors
             gdf_event (GeoDataFrame): Set of locations of a network to choose from for regular event anchors
-            radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for work anchor
-            radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for regular event anchors
         """
+        # radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for work anchor
+        radius_buffer_h_w = self.radius_buffer_h_w
+        # radius_buffer_h_w (int): Radius to create a buffer around home anchor to search for regular event anchors
+        radius_buffer_h_r = self.radius_buffer_h_r
 
         home_id = random.randint(0, len(gdf_hw) - 1)
         home_geometry = gdf_hw.iloc[home_id]["geometry"]
@@ -248,6 +243,7 @@ class User(ABC):
         self,
         user_id: int,
         data_array: List[List[Union[int, float, Timestamp]]],
+        transformer_to_WGS: Transformer,
         startlon: float,
         startlat: float,
         time_start: Timestamp,
@@ -268,7 +264,7 @@ class User(ABC):
             Timestamp: Time from which to start generating GPS data for another activity
         """
         time_start += timedelta(minutes=1)
-        startlon, startlat = self.transformer_to_WGS.transform(startlon, startlat)
+        startlon, startlat = transformer_to_WGS.transform(startlon, startlat)
         while time_start < time_end:
             random_minutes = random.randint(1, 5)
             possible_forward_azimuth = random.randint(0, 360)
@@ -344,6 +340,7 @@ class User(ABC):
         data_array: List[List[Union[int, float, Timestamp]]],
         graph_proj: MultiDiGraph,
         nodes: GeoDataFrame,
+        transformer_to_WGS: Transformer,
         start_node: int,
         end_node: int,
         start_coords: Tuple[float, float],
@@ -401,7 +398,7 @@ class User(ABC):
         for i in range(number_of_points):
             # even though the actual path and points are in projected CRS
             # the final coordinates should be in WGS 84
-            endLon, endLat = self.transformer_to_WGS.transform(points[i].x, points[i].y)
+            endLon, endLat = transformer_to_WGS.transform(points[i].x, points[i].y)
             # if not a last point calculate a chaotic point
             if i != number_of_points - 1:
                 chaotic_point = self.get_chaotic_point(
@@ -430,7 +427,7 @@ class User(ABC):
                 time_start += timedelta(seconds=time_to_chaotic_point)
 
                 # Change the current coordinates to coordinate of a chaotic point and project to WGS 84
-                endLon, endLat = self.transformer_to_WGS.transform(
+                endLon, endLat = transformer_to_WGS.transform(
                     chaotic_point.x, chaotic_point.y
                 )
                 # Lenght from chaotic point to the next point or maybe it will be more clear - end point
@@ -453,9 +450,7 @@ class User(ABC):
 
             # if last point in the route - add it and its time to data array
             else:
-                endLon, endLat = self.transformer_to_WGS.transform(
-                    points[i].x, points[i].y
-                )
+                endLon, endLat = transformer_to_WGS.transform(points[i].x, points[i].y)
                 time_gps = time_start.round(freq="S")
                 data_array.append([user_id, time_gps, endLon, endLat])
 
@@ -468,11 +463,21 @@ class User(ABC):
         beggining_of_day: Timestamp,
         day_of_week: int,
         list_of_locations: List[List[Union[int, float]]],
+        network_graph_proj: MultiDiGraph,
+        network_nodes: GeoDataFrame,
+        transformer_to_WGS: Transformer,
     ) -> Timestamp:
         # pylint: disable=missing-function-docstring
         pass
 
     @abstractmethod
-    def generate_gps(self):
+    def generate_gps(
+        self,
+        network_gdf_hw: GeoDataFrame,
+        network_gdf_event: GeoDataFrame,
+        network_graph_proj: MultiDiGraph,
+        network_nodes: GeoDataFrame,
+        transformer_to_WGS: Transformer,
+    ):
         # pylint: disable=missing-function-docstring
         pass

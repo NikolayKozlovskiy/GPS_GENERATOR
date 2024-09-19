@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import geopandas as gpd
 import pandas as pd
-from pyproj import CRS
+from pyproj import CRS, Transformer
 
 from gps_synth.common.abs_user import User
 from gps_synth.common.columns import ColNames
@@ -59,13 +59,12 @@ class GPS_Generator:
 
         return network
 
-    def generate_users(self, network: Network, profile_user_config: Any) -> List[User]:
+    def generate_users(self, profile_user_config: Any) -> List[User]:
         """
         Initialise User class and run it as many times as specified in NUM_USERS config param.
         Store instances in a list
 
         Args:
-            network (Network): An instance of Netwrok class to use for choosing anchoir points of a user
             profile_user_config (Any): YAML object with config params regarding users
 
         Returns:
@@ -80,20 +79,21 @@ class GPS_Generator:
         for _ in range(profile_user_config["NUM_USERS"]):
             # ensure uniqueness of user ids in case of appending parquets
             user_id = uuid.uuid4().hex
-            new_user = user_class(user_id, network, profile_user_config)
+            new_user = user_class(user_id, profile_user_config)
             users_array.append(new_user)
 
         return users_array
 
     def execute_method_for_users(
-        self, users: List[User], method_name: str
+        self, users: List[User], method_name: str, args: List = None
     ) -> List[User]:
         """
         Loop through users and execute specified instance method
 
         Args:
             users (List[User]): List of User instances
-            method_name (str): name of a method you want to execute
+            method_name (str): Name of a method you want to execute
+            args (List): List of args of the method, they are all related to Network attributes
 
         Returns:
             List[User]: List of User instances with executed method
@@ -101,7 +101,7 @@ class GPS_Generator:
 
         for user in users:
             method = getattr(user, method_name)
-            method()
+            method(*args)
         return users
 
     def output_gps(
@@ -228,7 +228,7 @@ class GPS_Generator:
             partition_columns (List[str]): Columsn to use for partitioning
             existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination
         """
-        self.logger.info("Writing metadata")
+        self.logger.info("Writing metadata\n")
 
         for profile_name, users in users_dictionary.items():
 
@@ -291,7 +291,7 @@ class GPS_Generator:
                     ]
                 except KeyError as e:
                     self.logger.warning(
-                        "%d : the network called %s is not yet created",
+                        "%s : the network called %s is not yet created",
                         e,
                         profile_network_config["NETWORK_NAME"],
                     )
@@ -305,26 +305,46 @@ class GPS_Generator:
                     network
                 )
             self.logger.info(
-                "Network for profile '%d' is generated, network name: %s",
+                "Network for profile '%s' is generated, network name: %s",
                 profile_name,
                 profile_network_config["NETWORK_NAME"],
             )
-
+            # store the Network attributes globally so each user instance can access them
             self.users_network_dict[profile_name] = profile_network_config[
                 "NETWORK_NAME"
             ]
 
+            (
+                network_graph_crs,
+                network_gdf_hw,
+                network_gdf_event,
+                network_graph_proj,
+                network_graph_nodes,
+            ) = (
+                getattr(network, attr)
+                for attr in ["graph_crs", "gdf_hw", "gdf_event", "graph_proj", "nodes"]
+            )
+            # transformer from graph projection to WGS86
+            transformer_to_WGS = Transformer.from_crs(
+                network_graph_crs, crs_4326, always_xy=True
+            )
+
             # generagte users of a profile
             profile_users_config = profile_config["USER_PARAMS"]
-            users = self.generate_users(network, profile_users_config)
+            users = self.generate_users(profile_users_config)
             self.logger.info(
-                "Users for profile '%d' is generated, number of users: %s",
+                "Users for profile '%s' is generated, number of users: %s",
                 profile_name,
                 profile_users_config["NUM_USERS"],
             )
             # create meaningful locations for each user
-            users_with_mean_loc = self.execute_method_for_users(
-                users, "get_meaningful_locations"
+            users_with_meaningful_loc = self.execute_method_for_users(
+                users,
+                "get_meaningful_locations",
+                [
+                    network_gdf_hw,
+                    network_gdf_event,
+                ],
             )
             self.logger.info(
                 "Meaningful locations for users of profile '%s' is generated",
@@ -332,7 +352,15 @@ class GPS_Generator:
             )
             # generate synth gps data for each user
             users_with_gps = self.execute_method_for_users(
-                users_with_mean_loc, "generate_gps"
+                users_with_meaningful_loc,
+                "generate_gps",
+                [
+                    network_gdf_hw,
+                    network_gdf_event,
+                    network_graph_proj,
+                    network_graph_nodes,
+                    transformer_to_WGS,
+                ],
             )
             self.logger.info(
                 "GPD data for users of profile '%s' is generated", profile_name
