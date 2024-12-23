@@ -1,0 +1,62 @@
+site_name: GPS Synthetic Generator
+repo_url: https://github.com/NikolayKozlovskiy/GPS_GENERATOR
+repo_name: GPS_GENERATOR
+theme:
+# https://jimandreas.github.io/mkdocs-material/setup/setting-up-navigation/#navigation-tabs
+  features:
+    - toc.integrate
+    - navigation.tracking
+    - navigation.top
+    - navigation.tabs
+    # - navigation.tabs.sticky 
+
+
+  name: "material"
+  icon:
+    repo: fontawesome/brands/github
+  palette: 
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+      primary: deep purple
+      accent: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+plugins:
+  - search
+  - section-index
+  - gen-files:
+      scripts:
+        - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+          paths: [gps_synth]
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: "material.extensions.emoji.twemoji"
+      emoji_generator: "material.extensions.emoji.to_svg"
+
+nav:
+  - Home: index.md
+  - Overview: overview.md
+  - Dev Guide:
+    - dev_guide/index.md
+    - Setup: dev_guide/setup.md
+    - Contribution: dev_guide/contribution.md
+  - User Manual: user_manual.md
+  - Code Reference: reference/
+  - Aknowledgements: aknowledgement.md
+  - License: LICENSE.md

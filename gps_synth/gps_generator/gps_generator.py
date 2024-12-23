@@ -223,7 +223,7 @@ class GPS_Generator:
         Args:
             users_dictionary (Dict[str, List[User]]): A dictionary where key is a name of a profile and a value is a list of User instances belonging to this profile
             network_dictionary (Dict[str, Network]): A dictionary where key is a name of a profile and a value is an instance of Network belonging to this profile
-            users_netwrok_dict (Dict[str, str]): Dictionaru to connect users to their network
+            users_network_dict (Dict[str, str]): Dictionaru to connect users to their network
             metadata_output_folder_path (str): A path to a folder to store GPS results (created as by appending sub-path to the base/parent path)
             partition_columns (List[str]): Columsn to use for partitioning
             existing_data_behavior (str): Controls how the dataset will handle data that already exists in the destination

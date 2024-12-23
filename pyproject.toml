@@ -30,6 +30,19 @@ ipyleaflet = "0.17.3"
 keplergl = "^0.3.2"
 folium = "^0.12.1"
 
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs="~1.5"
+mkdocs-material="~9.5"
+mkdocs-gen-files="~0.5"
+mkdocs-literate-nav="~0.6"
+mkdocs-section-index="~0.3"
+mkdocs-nav-weight="~0.2"
+mkdocstrings-python="~1.8"
+griffe = "~0.37"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -55,6 +68,7 @@ disable = [
     "too-many-locals",
     "too-many-arguments",
     "too-many-instance-attributes",
+    "too-many-positional-arguments",
 ]
 
 [tool.pylint.miscellaneous]
@@ -70,5 +84,3 @@ profile="black"
 [tool.black]
 line-length = 88
 target-version = ["py39", "py310", "py311", "py312"]
-
-

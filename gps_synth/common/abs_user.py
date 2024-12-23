@@ -1,3 +1,12 @@
+"""
+User class is a parent class of all child classes specified in user module `gps_synth/user`.
+
+User class has a combination of concrete and abstract methods:
+
+- concrete methods are meant to be called in child classes with super() function.
+- abstract methods are meant to show what methods should be in a child class, but their implementation is a subject of this child class.
+"""
+
 import math
 import random
 from abc import ABC, abstractmethod
@@ -13,12 +22,6 @@ from networkx import MultiDiGraph
 from pandas import DataFrame, Timestamp
 from pyproj import Geod, Transformer
 from shapely.geometry import LineString, Point
-
-# User class is a parent class of all child classes specified in user package
-# User class is an abtract class and is not meant to be initiated
-# User class has a combination of concrete and abstract methods:
-# # concrete methods are meant to be called in child classes with super() function
-# # abstract methods are meant to show what methods should be in a child class, but their implementation is a subject of this child class
 
 
 class User(ABC):
@@ -253,7 +256,7 @@ class User(ABC):
         Generate the nearby points around some coordinates (the centroid point of a user’s location)
 
         Args:
-            userd_id (int): Id of a user
+            user_id (int): Id of a user
             data_array (List[List[Union[int, float, Timestamp]]]): List to store user's GPS data (user_id, lon, lat, timestamp)
             startlon (float): Longitude of a point where to start generating nearby points (more precisely their coordinates)
             startlat (float): Latitude of a point where to start generating nearby points (more precisely their coordinates)
@@ -354,7 +357,7 @@ class User(ABC):
         and create GPS data while moving from point to point
 
         Args:
-            userd_id (int): Id of a user
+            user_id (int): Id of a user
             data_array (List[List[Union[int, float, Timestamp]]]): List to store user's GPS data (user_id, lon, lat, timestamp)
             graph_proj (MultiDiGraph): Projected graph of a network
             nodes (GeoDataFrame): Nodes of netwrok's projected graph
@@ -366,7 +369,7 @@ class User(ABC):
             proximity_to_road (int): A distance to define how a chaotic point should be from a path
             time_start (Timestamp): Timestamp from which to start generating moving points
 
-         Returns:
+        Returns:
             Timestamp: Time from which to start generating GPS data for another activity
         """
         # get the shortest route from start to end node

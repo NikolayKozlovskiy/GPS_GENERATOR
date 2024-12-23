@@ -1,4 +1,13 @@
+"""
+Reusable internal column names. Useful for referring to the the same column across multiple modules.
+"""
+
+
 class ColNames:
+    """
+    Class that enumerates all the column names.
+    """
+
     user_id = "user_id"
     timestamp = "timestamp"
     lon = "lon"

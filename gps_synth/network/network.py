@@ -87,7 +87,7 @@ class Network:
 
     def get_specific_type_of_locations(
         self,
-        gdf_locations: DataFrame,
+        df_locations: DataFrame,
         filter_columns: List[str],
         delete_columns: List[str],
     ) -> DataFrame:
@@ -104,8 +104,8 @@ class Network:
             DataFrame: Filtered locations dataframe
         """
 
-        return gdf_locations[gdf_locations[filter_columns].notnull().any(axis=1)][
-            list(set(gdf_locations.columns) - set(delete_columns))
+        return df_locations[df_locations[filter_columns].notnull().any(axis=1)][
+            list(set(df_locations.columns) - set(delete_columns))
         ].reset_index()
 
     def run(self):
