@@ -84,3 +84,7 @@ profile="black"
 [tool.black]
 line-length = 88
 target-version = ["py39", "py310", "py311", "py312"]
+
+[project.urls]
+GitHub = "https://github.com/NikolayKozlovskiy/GPS_GENERATOR"
+Documentation = "https://nikolaykozlovskiy.github.io/GPS_GENERATOR/"
