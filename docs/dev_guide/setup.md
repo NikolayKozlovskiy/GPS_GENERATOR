@@ -10,7 +10,7 @@ Code is executed within a docker container, however, the outcome can also be dir
 2. Clone the repo: `git clone https://github.com/NikolayKozlovskiy/GPS_GENERATOR.git`
 3. Move the repo directory e.g. `cd GPS_GENERATOR`
 4. Build a docker image called gps_generator: `make build_docker_image`
-5. In `Makefile` correctly specify relative paths for your source directories which then will be used in [bind mounts](https://docs.docker.com/storage/bind-mounts/): `OUTPUT_DIR` and `CONFIG`
+5. In `Makefile` correctly specify relative paths for your source directories which then will be used in [bind mounts](https://docs.docker.com/storage/bind-mounts/): `OUTPUT_DIR` and `CONFIG` (or use default ones)
 6. Based on the image create a docker container named the same, which will constatntly run till it is removed: `make create_docker_container`
 7. Open a new terminal (a docker container is runing in the first one) and run the `main.py` script: `make run_main_script`
 6. When you no longer need a container, remove it: `make remove_docker_container`<br />

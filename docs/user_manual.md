@@ -2,7 +2,7 @@
 
 ## Brief navigation
 
-It is hihly recommended to use Docker environment. If you need to experiment with the code, print out the specific output you can do this in JupyterLab, execute `make run_jupyter_lab` and go to `http://127.0.0.1:8888/` (the port should not be occupied both in docker and local machine). If you want to run some other 'more custom' commands use [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) option, make sure your container is running.
+It is hihly recommended to use Docker environment. If you need to experiment with the code, print out the specific output you can do this in JupyterLab, execute `make run_jupyter_lab` and go to `http://127.0.0.1:8888/lab` (the port should not be occupied both in docker and local machine). If you want to run some other 'more custom' commands use [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) option, make sure your container is running.
 
 
 ## Output structure
