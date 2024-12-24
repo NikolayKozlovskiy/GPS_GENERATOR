@@ -279,7 +279,7 @@ class User(ABC):
             data_array.append([user_id, time_gps, endLon, endLat])
             time_start += timedelta(minutes=random_minutes)
 
-        return time_start.round(freq="S")
+        return time_start.round(freq="s")
 
     def get_points_on_path(
         self, path: LineString, number_of_points: int
@@ -423,7 +423,7 @@ class User(ABC):
                     )
 
                 # Add current point's coordinates and the time it was registered in data array
-                time_gps = time_start.round(freq="S")
+                time_gps = time_start.round(freq="s")
                 data_array.append([user_id, time_gps, endLon, endLat])
 
                 # Add time taken to reach a chaotic point
@@ -444,7 +444,7 @@ class User(ABC):
                     time_to_next_point = distance_to_next_point / mean_move_speed_ms
 
                 # Add chaotic point's coordinates and the time it was registered in data array
-                time_gps = time_start.round(freq="S")
+                time_gps = time_start.round(freq="s")
                 data_array.append([user_id, time_gps, endLon, endLat])
 
                 # Add time taken to reach a the next point
@@ -454,10 +454,10 @@ class User(ABC):
             # if last point in the route - add it and its time to data array
             else:
                 endLon, endLat = transformer_to_WGS.transform(points[i].x, points[i].y)
-                time_gps = time_start.round(freq="S")
+                time_gps = time_start.round(freq="s")
                 data_array.append([user_id, time_gps, endLon, endLat])
 
-        return time_start.round(freq="S")
+        return time_start.round(freq="s")
 
     @abstractmethod
     def random_plot_of_day(
