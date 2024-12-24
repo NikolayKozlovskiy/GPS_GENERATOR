@@ -23,8 +23,8 @@ ENV POETRY_NO_INTERACTION=1 \
 # recommendations https://python-poetry.org/docs/basic-usage/#:~:text=You%20should%20commit%20the%20poetry,of%20dependencies%20(more%20below).
 COPY pyproject.toml poetry.lock README.md ./
 
-# delete --with vis if you don't need this optional group dependencies 
-RUN poetry install --with vis --no-root && rm -rf $POETRY_CACHE_DIR
+# delete --with vis,docs if you don't need these optional groups dependencies 
+RUN poetry install --with vis,docs --no-root && rm -rf $POETRY_CACHE_DIR
 
 COPY configs ./configs
 COPY gps_synth ./gps_synth

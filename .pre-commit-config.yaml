@@ -1,0 +1,38 @@
+# https://stefaniemolin.com/articles/devx/pre-commit/setup-guide/
+default_language_version: 
+  python: python3.10
+
+repos: 
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    - id: check-toml
+    - id: check-yaml
+      exclude: mkdocs.yml
+
+-   repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+    - id: black
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    - id: isort
+      name: isort(python)
+      
+-   repo: local
+    hooks:
+    - id: pylint
+      name: pylint
+      entry: pylint
+      language: system
+      types: [python]
+      require_serial: true
+      args:
+        [
+          "-rn",
+          "-sn", 
+          "--disable=line-too-long",
+          "--rcfile=pyproject.toml" 
+        ]
