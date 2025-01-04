@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gps_synth"
-version = "1.0.0"
+version = "0.2.0"
 description = "Python package to generate GPS synthetic data"
 authors = ["Nikolay Kozlovskiy <nikolajkozlovskij73@gmail.com>"]
 license = "MIT"

@@ -1,8 +1,7 @@
-name: gh_pages
+name: Automated GitHub Pages
 on:
   push:
     branches:
-      - 2-github-pages 
       - main
 permissions:
   contents: write

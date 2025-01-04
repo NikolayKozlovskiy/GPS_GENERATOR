@@ -1,0 +1,21 @@
+name: Docker Build Workflow
+on:
+  push:
+    # push command on any branch
+    branches:
+      - '**'
+    paths:
+      # only if these files are changed
+      - 'Dockerfile'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+
+jobs:
+    build_image:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Docker build
+              run: docker build . -t gps_generator  
+
