@@ -1,4 +1,4 @@
-name: Docker Build Workflow
+name: Docker Build
 on:
   push:
     # push command on any branch
