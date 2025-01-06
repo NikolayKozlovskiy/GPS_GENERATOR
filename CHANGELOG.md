@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 - CHANGELOG.md
 
-## [v0.2.0-beta] - 2024-01-04
+## [v0.2.0-beta](https://github.com/NikolayKozlovskiy/GPS_GENERATOR/releases/tag/v0.2.0-beta) - 2025-01-04
 
 ### Added
 
@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 - Bump geopandas from 0.14.0 to 0.14.4
 
 
-## [v0.1.0-beta] - 2024-01-01
+## [v0.1.0-beta](https://github.com/NikolayKozlovskiy/GPS_GENERATOR/releases/tag/v0.1.0-beta) - 2024-01-01
 
 ### Added
 
