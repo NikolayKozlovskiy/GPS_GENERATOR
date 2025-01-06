@@ -24,4 +24,6 @@ I am arrogant enough to think that this project might be interesting for someone
 
 3. In terms of growing number of profiles, possible rethinking of orchestration approach.
 4. Code optimization (e.g., in `get_meaningful_locations()`).
-5. Testing (but this is in a different life).
+5. Testing, benchmarking, trying new config params.
+6. More detailed and thorough approach for results' evaluation
+7. Just to play around: setting up and running code on Cloud using e.g. Terraform
